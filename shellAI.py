@@ -6,7 +6,6 @@ import subprocess
 import tomllib
 from pathlib import Path
 import re
-import pty
 
 config_path = Path.home() / ".config/shellAI/shellAI.toml"
 if os.path.exists(config_path):
@@ -31,7 +30,6 @@ model = genai.GenerativeModel(
 )
 
 input_string: str = ""
-# this is a comment
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
 elif os.getenv("TMUX") != "":
@@ -60,12 +58,15 @@ if i + input_string != "":
 
     if command:
         # Remove leading $ if present
-        command = command.lstrip("$").strip()
+        command = command.lstrip("$")
+        command = command.replace('"', "'")
         session = (
             subprocess.check_output("tmux display-message -p '#S'", shell=True)
             .decode("utf-8")
             .strip()
         )
-        pty.spawn(["tmux", "send-keys", "-t", session, command])
+        subprocess.run(" ".join(["tmux send-keys", "-t", session, '"'+command+'"']),shell=True)
+        print('\n')
+        
 else:
     print("no input")
