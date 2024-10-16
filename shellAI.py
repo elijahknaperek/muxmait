@@ -121,19 +121,13 @@ if i + input_string != "":
         print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
 
     if command:
-        # Remove leading $ if present
-        command = command.lstrip("$")
-        command = command.replace('"', "'")
-        session = (
-            subprocess.check_output("tmux display-message -p '#S'", shell=True)
-            .decode("utf-8")
-            .strip()
-        )
+        # Remove leading $ if present and replace " for input
+        command = command.lstrip("$").replace('"', "'")
         enter = "ENTER" if "auto" in flags else ""
         if "recursive" in flags:
             command = command + ";ai " + " ".join(["--"+s for s in flags]) + " " + i
         subprocess.run(
-            " ".join(["tmux send-keys", "-t", session, '"' + command + '"', enter]), shell=True
+            " ".join(["tmux send-keys", '"' + command + '"', enter]), shell=True
         )
         print("\n")
 
