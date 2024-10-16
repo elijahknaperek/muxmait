@@ -4,6 +4,43 @@ import sys
 import os
 import subprocess
 import re
+import argparse
+
+VERBOSELEN = 20
+
+parser = argparse.ArgumentParser(
+    prog="ai",
+    description="ai terminal assistant",
+    epilog="eschaton",
+)
+
+parser.add_argument(
+    "-A", "--auto", help="automatically run command. be weary", action="store_true"
+)
+parser.add_argument(
+    "-r", "--recursive", help="add ;ai to the end of the ai suggested command", action="store_true"
+)
+parser.add_argument(
+    "-p", "--pro", help="use gemini pro model instead", action="store_true"
+)
+parser.add_argument(
+    "-t", "--terse", help="only return command no explanation", action="store_true"
+)
+parser.add_argument(
+    "-y", "--python", help="use python assistant prompt", action="store_true"
+)
+parser.add_argument(
+    "-v", "--verbose", help="verbose mode", action="store_true"
+)
+
+flags, arg_input = parser.parse_known_args()
+if "verbose" in flags:
+    print("Flags: ".ljust(VERBOSELEN), end="")
+    print(" ".join({x: y for x, y in vars(flags).items() if y is True}.keys()))
+    print("Prompt prefix: ".ljust(VERBOSELEN), end="")
+    print(" ".join(arg_input))
+
+quit()
 
 prompt = """
 You are an AI assistant within a shell command 'ai'. You operate by reading the 
@@ -33,7 +70,7 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 - If no command seems necessary, gather info or give a command for the user to explore.
 """
 
-system_info = subprocess.check_output("hostnamectl",shell=True).decode('utf-8')
+system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
 model = "gemini-1.5-flash-002"
@@ -42,6 +79,8 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 model = genai.GenerativeModel(model_name=model, system_instruction=prompt)
 
+
+
 input_string: str = ""
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
@@ -49,8 +88,8 @@ elif os.getenv("TMUX") != "":
     ib = subprocess.check_output("tmux capture-pane -pS -1000", shell=True)
     input_string = ib.decode("utf-8")
 i = ""
-if len(sys.argv) > 1:
-    i = " ".join(sys.argv[1:])
+if len(arg_input) > 1:
+    i = " ".join(arg_input)
 if i + input_string != "":
     r = model.generate_content(i + ":\n" + input_string)
     response = r.text
