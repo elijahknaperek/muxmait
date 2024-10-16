@@ -27,9 +27,6 @@ parser.add_argument(
     "-t", "--terse", help="only return command no explanation", action="store_true"
 )
 parser.add_argument(
-    "-y", "--python", help="use python assistant prompt", action="store_true"
-)
-parser.add_argument(
     "-v", "--verbose", help="verbose mode", action="store_true"
 )
 
@@ -72,12 +69,6 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
-if "python" in flags:
-    prompt = """
-    you are an python programming assistant.
-    Give any code in one code block.
-    Keep it simple
-    """
 
 if "pro" in flags:
     model = "gemini-1.5-pro-002"
@@ -106,7 +97,6 @@ if i + input_string != "":
 
     r = model.generate_content(i + ":\n" + input_string)
     response = r.text
-    #response = """test\ntest\n sleep 1"""
 
     # Extract a command from the response
     command = None
