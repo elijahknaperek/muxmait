@@ -5,6 +5,7 @@ import os
 import subprocess
 import re
 import argparse
+from time import sleep
 
 VERBOSELEN = 20
 
@@ -130,6 +131,8 @@ if i + input_string != "":
             " ".join(["tmux send-keys", '"' + command + '"', enter]), shell=True
         )
         print("\n")
+        if "auto" in flags:
+            sleep(40)
 
 else:
     print("no input")
