@@ -16,6 +16,8 @@ parser = argparse.ArgumentParser(
 )
 
 # TODO add a way to control other tmux session or pane
+# TODO make -Ar work with external control by adding command to own session
+# TODO add way to change number of scrollback lines given in prompt
 # TODO add way to get propmpt from file
 # TODO add a way to log commands
 # TODO add other ai apis
