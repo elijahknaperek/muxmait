@@ -30,6 +30,9 @@ parser.add_argument(
 parser.add_argument(
     "-v", "--verbose", help="verbose mode", action="store_true"
 )
+parser.add_argument(
+    "--debug", help="skips api request and sets message to something mundane" ,action="store_true"
+)
 
 flag_thing, arg_input = parser.parse_known_args()
 flags = {x: y for x, y in vars(flag_thing).items() if y is True}.keys()
@@ -80,7 +83,15 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 model = genai.GenerativeModel(model_name=model, system_instruction=prompt)
 
-
+def clean_command(c:str) -> str:
+    subs = {
+            '"': '\\"',
+            "\n": "",
+            "$": "\\$",
+            "`": "\\`",
+            "\\": "\\\\",
+            }
+    return "".join(subs.get(x,x) for x in c)
 
 input_string: str = ""
 if not sys.stdin.isatty():
@@ -96,8 +107,11 @@ if i + input_string != "":
         print("Tokens:".ljust(VERBOSELEN), end="")
         print(model.count_tokens(i + ":\n" + input_string))
 
-    r = model.generate_content(i + ":\n" + input_string)
-    response = r.text
+    if "debug" in flags:
+        response = """test msg \n echo test \n echo test \n"""
+    else:
+        r = model.generate_content(i + ":\n" + input_string)
+        response = r.text
 
     # Extract a command from the response
     command = None
@@ -122,11 +136,10 @@ if i + input_string != "":
         print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
 
     if command:
-        # Remove leading $ if present and replace " for input and remove enter
-        command = command.lstrip("$").replace('"', "'").replace("\n", " ")
+        command = clean_command(command)
         enter = "ENTER" if "auto" in flags else ""
         if "recursive" in flags:
-            command = command + ";ai " + " ".join(["--"+s for s in flags]) + " " + i
+            command = command + ";ai " + " ".join(sys.argv[1:])
         subprocess.run(
             " ".join(["tmux send-keys", '"' + command + '"', enter]), shell=True
         )
