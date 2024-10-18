@@ -15,6 +15,10 @@ parser = argparse.ArgumentParser(
     epilog="eschaton",
 )
 
+# TODO add a way to control other tmux session or pane
+# TODO add way to get propmpt from file
+# TODO add a way to log commands
+# TODO add other ai apis
 parser.add_argument(
     "-A", "--auto", help="automatically run command. be weary", action="store_true"
 )
@@ -35,7 +39,9 @@ parser.add_argument(
 )
 
 flag_thing, arg_input = parser.parse_known_args()
+# TODO why did I do this
 flags = {x: y for x, y in vars(flag_thing).items() if y is True}.keys()
+
 if "verbose" in flags:
     print("Flags: ".ljust(VERBOSELEN), end="")
     print(" ".join(flags))
@@ -69,7 +75,7 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 
 - If no command seems necessary, gather info or give a command for the user to explore.
 """
-
+# TODO find  a better way to get system info
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
@@ -83,7 +89,9 @@ genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 
 model = genai.GenerativeModel(model_name=model, system_instruction=prompt)
 
-def clean_command(c:str) -> str:
+
+def clean_command(c: str) -> str:
+
     subs = {
             '"': '\\"',
             "\n": "",
@@ -91,26 +99,31 @@ def clean_command(c:str) -> str:
             "`": "\\`",
             "\\": "\\\\",
             }
-    return "".join(subs.get(x,x) for x in c)
+    return "".join(subs.get(x, x) for x in c)
+
 
 input_string: str = ""
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
 elif os.getenv("TMUX") != "":
-    ib = subprocess.check_output("tmux capture-pane -pS -600", shell=True)
+    ib = subprocess.check_output("tmux capture-pane -pS -1000", shell=True)
     input_string = ib.decode("utf-8")
-i = ""
+
+
+prefix_input = ""
 if len(arg_input) > 0:
-    i = " ".join(arg_input)
-if i + input_string != "":
+    prefix_input = " ".join(arg_input)
+
+
+if prefix_input + input_string != "":
     if "verbose" in flags:
         print("Tokens:".ljust(VERBOSELEN), end="")
-        print(model.count_tokens(i + ":\n" + input_string))
+        print(model.count_tokens(prefix_input + ":\n" + input_string))
 
     if "debug" in flags:
         response = """test msg \n echo test \n echo test \n"""
     else:
-        r = model.generate_content(i + ":\n" + input_string)
+        r = model.generate_content(prefix_input + ":\n" + input_string)
         response = r.text
 
     # Extract a command from the response
