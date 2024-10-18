@@ -86,7 +86,7 @@ input_string: str = ""
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
 elif os.getenv("TMUX") != "":
-    ib = subprocess.check_output("tmux capture-pane -pS -1000", shell=True)
+    ib = subprocess.check_output("tmux capture-pane -pS -600", shell=True)
     input_string = ib.decode("utf-8")
 i = ""
 if len(arg_input) > 0:
@@ -122,8 +122,8 @@ if i + input_string != "":
         print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
 
     if command:
-        # Remove leading $ if present and replace " for input
-        command = command.lstrip("$").replace('"', "'")
+        # Remove leading $ if present and replace " for input and remove enter
+        command = command.lstrip("$").replace('"', "'").replace("\n", " ")
         enter = "ENTER" if "auto" in flags else ""
         if "recursive" in flags:
             command = command + ";ai " + " ".join(["--"+s for s in flags]) + " " + i
@@ -132,7 +132,7 @@ if i + input_string != "":
         )
         print("\n")
         if "auto" in flags:
-            sleep(40)
+            sleep(2)
 
 else:
     print("no input")
