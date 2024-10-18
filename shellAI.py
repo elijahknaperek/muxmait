@@ -87,7 +87,11 @@ if "pro" in flags:
 else:
     model = "gemini-1.5-flash-002"
 
-genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+try:
+    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+except KeyError:
+    print("need GEMINI_API_KEY environment variable") 
+    quit()
 
 model = genai.GenerativeModel(model_name=model, system_instruction=prompt)
 
