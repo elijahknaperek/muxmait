@@ -121,12 +121,6 @@ if i + input_string != "":
         # Get the last line from the last code block
         command = code_blocks[-1].strip().split("\n")[-1]
     else:
-        # If no code blocks, look for the last line starting with $
-        dollar_lines = re.findall(r"^\$\s*(.+)$", response, re.MULTILINE)
-        if dollar_lines:
-            command = dollar_lines[-1]
-
-    if command is None:
         # just take last line as command if no code block
         resp = response.strip().splitlines()
         command = resp[-1]
