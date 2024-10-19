@@ -90,7 +90,7 @@ else:
 try:
     genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 except KeyError:
-    print("need GEMINI_API_KEY environment variable") 
+    print("need GEMINI_API_KEY environment variable")
     quit()
 
 model = genai.GenerativeModel(model_name=model, system_instruction=prompt)
