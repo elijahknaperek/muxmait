@@ -178,6 +178,12 @@ providers = {
         "default_model": "meta-llama/Llama-Vision-Free",
         "wrapper": get_response_openrouter,
     },
+    "openai": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "api_key": "OPENAI_API_KEY",
+        "default_model": "gpt-4o-mini",
+        "wrapper": get_response_openrouter,
+    }
 
 }
 
