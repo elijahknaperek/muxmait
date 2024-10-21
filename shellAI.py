@@ -10,6 +10,18 @@ from time import sleep
 
 VERBOSELEN = 20
 
+
+def clean_command(c: str) -> str:
+    subs = {
+            '"': '\\"',
+            "\n": "",
+            "$": "\\$",
+            "`": "\\`",
+            "\\": "\\\\",
+            }
+    return "".join(subs.get(x, x) for x in c)
+
+
 parser = argparse.ArgumentParser(
     prog="ai",
     description="ai terminal assistant",
@@ -77,14 +89,21 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 - If no command seems necessary, gather info or give a command for the user to explore.
 """
 
+# Add system info to prompt
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
+# Select model
 if args.model != "":
     model = args.model
 else:
     model = "nousresearch/hermes-3-llama-3.1-405b:free"
 
+if args.verbose:
+    print("Using model:".ljust(VERBOSELEN), end="")
+    print(model)
+
+# Get key
 try:
     OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
     YOUR_SITE_URL = ""
@@ -93,18 +112,7 @@ except KeyError:
     print("need OPENROUTER_API_KEY environment variable")
     quit()
 
-
-def clean_command(c: str) -> str:
-    subs = {
-            '"': '\\"',
-            "\n": "",
-            "$": "\\$",
-            "`": "\\`",
-            "\\": "\\\\",
-            }
-    return "".join(subs.get(x, x) for x in c)
-
-
+# get input from stdin or tmux scrollback
 input_string: str = ""
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
@@ -112,14 +120,13 @@ elif os.getenv("TMUX") != "":
     ib = subprocess.check_output("tmux capture-pane -pS -1000", shell=True)
     input_string = ib.decode("utf-8")
 
+# add input from command invocation
 prefix_input = ""
 if len(arg_input) > 0:
     prefix_input = " ".join(arg_input)
 
+# start processing input
 if prefix_input + input_string != "":
-    if args.verbose:
-        print("Using model:".ljust(VERBOSELEN), end="")
-        print(model)
 
     if args.debug:
         response = """test msg \n echo test \n echo test \n"""
@@ -166,15 +173,22 @@ if prefix_input + input_string != "":
     if not args.terse:
         print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
 
+    # add command to Shell Prompt
     if command:
         command = clean_command(command)
+        # presses enter on target tmux pane
         enter = "ENTER" if args.auto else ""
+        # allows user to repeatedly call ai with the same options
         if args.recursive:
             command = command + ";ai " + " ".join(sys.argv[1:])
+        # send command to shell prompt
         subprocess.run(
             " ".join(["tmux send-keys", '"' + command + '"', enter]), shell=True
         )
+        # tmux send-keys on own pane will put output in front of ps and on prompt
+        # this keeps that output from moving the ps
         print("\n")
+        # a little delay when using auto so user can hopefully C-c out
         if args.auto:
             sleep(2)
 
