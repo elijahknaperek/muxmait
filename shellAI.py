@@ -143,7 +143,7 @@ if prefix_input + input_string != "":
         response += "input len:".ljust(VERBOSE_LEN) + str(len(input_string)) + "\n"
         response += "prefix_input:".ljust(VERBOSE_LEN) + prefix_input + ":\n"
         response += "test code block:\n"
-        response += "```bash\n echo " + prefix_input + "\n```\n"
+        response += "```bash\n echo \"$(" + prefix_input + ")\"\n```\n"
     else:
         messages = [
             {"role": "system", "content": prompt},
@@ -209,16 +209,16 @@ if prefix_input + input_string != "":
         # allows user to repeatedly call ai with the same options
         if args.recursive:
             command = command + ";ai " + " ".join(sys.argv[1:])
+        # a little delay when using auto so user can hopefully C-c out
+        if args.auto:
+            sleep(2)
         # send command to shell prompt
         subprocess.run(
-            " ".join(["tmux send-keys", f"-t {args.target}", f'"{command}"', enter]), shell=True
+            f'tmux send-keys -t {args.target} "{command}" {enter}', shell=True
         )
         # tmux send-keys on own pane will put output in front of ps and on prompt
         # this keeps that output from moving the ps
         print("\n")
-        # a little delay when using auto so user can hopefully C-c out
-        if args.auto:
-            sleep(2)
 
 else:
     print("no input")
