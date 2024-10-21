@@ -22,6 +22,13 @@ def clean_command(c: str) -> str:
     return "".join(subs.get(x, x) for x in c)
 
 
+default_tmux_target = (
+            subprocess
+            .check_output("tmux display-message -p '#S:#I.#P'", shell=True)
+            .decode("utf-8")
+            .strip()
+        )
+
 parser = argparse.ArgumentParser(
     prog="ai",
     description="ai terminal assistant",
@@ -55,11 +62,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-t", "--target", help="give target tmux pane to send commands to",
-    default=(
-            subprocess.check_output("tmux display-message -p '#S:#I.#P'", shell=True)
-            .decode("utf-8")
-            .strip()
-        ),
+    default=default_tmux_target,
 )
 
 args, arg_input = parser.parse_known_args()
@@ -194,8 +197,10 @@ if prefix_input + input_string != "":
         response = "\n".join(resp[0:-1])
 
     if not args.quiet:
-        if len(code_blocks) == 1:
-            # if printing msg remove code block as command will be printed by send-keys
+        if len(code_blocks) == 1 and args.target == default_tmux_target:
+            """ if printing msg remove code block as command will be printed
+             by send-keys if sending to remote target cmd will not be printed
+             by tmux so we skip this. """
             print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
         else:
             # if ai sends wrong number of commands just print whole msg
@@ -216,9 +221,11 @@ if prefix_input + input_string != "":
         subprocess.run(
             f'tmux send-keys -t {args.target} "{command}" {enter}', shell=True
         )
-        # tmux send-keys on own pane will put output in front of ps and on prompt
-        # this keeps that output from moving the ps
-        print("\n")
+        """ tmux send-keys on own pane will put output in front of ps and
+        on prompt this keeps that output from moving the ps. If we are sending
+        remote we do not need to worry about this. """
+        if args.target == default_tmux_target:
+            print("\n")
 
 else:
     print("no input")
