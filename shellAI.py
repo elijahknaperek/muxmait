@@ -123,6 +123,26 @@ def get_response_gemini() -> str:
     return response.text
 
 
+def get_response_anthropic() -> str:
+    try:
+        import anthropic
+    except ModuleNotFoundError:
+        print("run pip install anthropic")
+        quit()
+    messages = [
+        {"role": "user", "content": prefix_input + ":\n" + input_string}
+    ]
+
+    client = anthropic.Anthropic(api_key=api_key)
+    response = client.messages.create(
+            model=args.model,
+            max_tokens=2048,
+            system=system_prompt,
+            messages=messages
+    )
+    return response.content
+
+
 providers = {
     "openrouter": {
         "url": "https://openrouter.ai/api/v1/chat/completions",
@@ -141,6 +161,18 @@ providers = {
         "api_key": "GEMINI_API_KEY",
         "default_model": "gemini-1.5-flash-002",
         "wrapper": get_response_gemini,
+    },
+    "anthropic": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "api_key": "ANTHROPIC_API_KEY",
+        "default_model": "claude-3-5-sonnet-20240620",
+        "wrapper": get_response_anthropic,
+    },
+    "together": {
+        "url": "https://api.together.xyz/v1/chat/completions",
+        "api_key": "TOGETHER_API_KEY",
+        "default_model": "meta-llama/Llama-Vision-Free",
+        "wrapper": get_response_openrouter,
     },
 
 }
