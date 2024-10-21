@@ -38,9 +38,11 @@ parser.add_argument(
 )
 parser.add_argument(
     "-m", "--model", help="change model.",
+    default="nousresearch/hermes-3-llama-3.1-405b:free",
+
 )
 parser.add_argument(
-    "-t", "--terse", help="only return command no explanation",
+    "-q", "--quiet", help="only return command no explanation",
     action="store_true"
 )
 parser.add_argument(
@@ -51,6 +53,14 @@ parser.add_argument(
     "--debug", help="skips api request and sets message to something mundane",
     action="store_true"
 )
+parser.add_argument(
+    "-t", "--target", help="give target tmux pane to send commands to",
+    default=(
+            subprocess.check_output("tmux display-message -p '#S:#I.#P'", shell=True)
+            .decode("utf-8")
+            .strip()
+        ),
+)
 
 args, arg_input = parser.parse_known_args()
 
@@ -60,6 +70,11 @@ if args.verbose:
     print(args)
     print("Prompt prefix: ".ljust(VERBOSELEN), end="")
     print(" ".join(arg_input))
+    print("Using model:".ljust(VERBOSELEN), end="")
+    print(args.model)
+    print("Target:".ljust(VERBOSELEN), end="")
+    print(args.target)
+
 
 prompt = """
 You are an AI assistant within a shell command 'ai'. You operate by reading the
@@ -97,15 +112,6 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
-# Select model
-if args.model is not None:
-    model = args.model
-else:
-    model = "nousresearch/hermes-3-llama-3.1-405b:free"
-
-if args.verbose:
-    print("Using model:".ljust(VERBOSELEN), end="")
-    print(model)
 
 # Get key
 try:
@@ -133,7 +139,11 @@ if len(arg_input) > 0:
 if prefix_input + input_string != "":
 
     if args.debug:
-        response = """test msg \n echo test \n echo test \n"""
+        response = ""
+        response += "input len:".ljust(VERBOSELEN) + str(len(input_string)) + "\n"
+        response += "prefix_input:".ljust(VERBOSELEN) + prefix_input + ":\n"
+        response += "test code block:\n"
+        response += "```bash\n echo " + prefix_input + "\n```\n"
     else:
         messages = [
             {"role": "system", "content": prompt},
@@ -148,7 +158,7 @@ if prefix_input + input_string != "":
                 "X-Title": YOUR_APP_NAME,
             },
             data=json.dumps({
-                "model": model,
+                "model": args.model,
                 "messages": messages,
                 "temperature": 0,
                 "frequency_penalty": 1.3
@@ -183,7 +193,7 @@ if prefix_input + input_string != "":
         command = resp[-1]
         response = "\n".join(resp[0:-1])
 
-    if not args.terse:
+    if not args.quiet:
         if len(code_blocks) == 1:
             # if printing msg remove code block as command will be printed by send-keys
             print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
