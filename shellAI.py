@@ -87,6 +87,8 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 - DO use commands like `sed` or `echo >>` for file edits, or other non-interactive commands where applicable.
 
 - If no command seems necessary, gather info or give a command for the user to explore.
+
+- ONLY ONE COMMAND PER RESPONSE AT END OF RESPONSE
 """
 
 # Add system info to prompt
@@ -94,7 +96,7 @@ system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
 # Select model
-if args.model != "":
+if args.model is not None:
     model = args.model
 else:
     model = "nousresearch/hermes-3-llama-3.1-405b:free"
@@ -145,13 +147,20 @@ if prefix_input + input_string != "":
             },
             data=json.dumps({
                 "model": model,
-                "messages": messages
+                "messages": messages,
+                "temperature": 0,
+                "frequency_penalty": 1.3
             })
         )
 
         if response.status_code == 200:
             response_data = response.json()
-            response = response_data['choices'][0]['message']['content']
+            try:
+                response = response_data['choices'][0]['message']['content']
+            except KeyError:
+                print("unexpected output")
+                print(response_data)
+                quit()
         else:
             print(f"Error: {response.status_code}")
             print(response.text)
@@ -161,6 +170,8 @@ if prefix_input + input_string != "":
     command = None
     # Look for the last code block
     code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)```", response, re.DOTALL)
+    if args.verbose:
+        print("code_blocks:".ljust(VERBOSELEN) + ":".join(code_blocks))
     if code_blocks:
         # Get the last line from the last code block
         command = code_blocks[-1].strip().split("\n")[-1]
@@ -171,7 +182,12 @@ if prefix_input + input_string != "":
         response = "\n".join(resp[0:-1])
 
     if not args.terse:
-        print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
+        if len(code_blocks) == 1:
+            # if printing msg remove code block as command will be printed by send-keys
+            print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
+        else:
+            # if ai sends wrong number of commands just print whole msg
+            print(response)
 
     # add command to Shell Prompt
     if command:
