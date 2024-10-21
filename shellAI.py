@@ -129,18 +129,22 @@ def get_response_anthropic() -> str:
     except ModuleNotFoundError:
         print("run pip install anthropic")
         quit()
-    messages = [
-        {"role": "user", "content": prefix_input + ":\n" + input_string}
-    ]
 
     client = anthropic.Anthropic(api_key=api_key)
     response = client.messages.create(
             model=args.model,
             max_tokens=2048,
             system=system_prompt,
-            messages=messages
+            messages=[
+                {"role": "user",
+                 "content": prefix_input + ":\n" + input_string}
+            ]
     )
-    return response.content
+    text_content = []
+    for content_block in response.content:
+        if isinstance(content_block, dict) and content_block.get('type') == 'text':
+            text_content.append(content_block.get('text', ''))
+    return ' '.join(text_content)
 
 
 providers = {
