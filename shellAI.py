@@ -213,7 +213,14 @@ if prefix_input + input_string != "":
         enter = "ENTER" if args.auto else ""
         # allows user to repeatedly call ai with the same options
         if args.recursive:
-            command = command + ";ai " + " ".join(sys.argv[1:])
+            if args.target == default_tmux_target:
+                command = command + ";ai " + " ".join(sys.argv[1:])
+            else:
+                subprocess.run(
+                    f'tmux send-keys "ai {" ".join(sys.argv[1:])}" {enter}', shell=True
+                    )
+                print("\n")
+
         # a little delay when using auto so user can hopefully C-c out
         if args.auto:
             sleep(2)
