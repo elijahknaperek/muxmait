@@ -13,7 +13,7 @@ YOUR_SITE_URL = ""
 YOUR_APP_NAME = "shellai"
 
 
-prompt = """
+system_prompt = """
 You are an AI assistant within a shell command 'ai'. You operate by reading the
 users scrollback. You can not see interactive input. Here are your guidelines:
 
@@ -68,7 +68,7 @@ def get_response_debug() -> str:
 
 def get_response_openrouter() -> str:
     messages = [
-        {"role": "system", "content": prompt},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": prefix_input + ":\n" + input_string}
     ]
 
@@ -112,7 +112,7 @@ def get_response_gemini() -> str:
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel(
             args.model,
-            system_instruction=prompt
+            system_instruction=system_prompt
             )
     response = model.generate_content(
             prefix_input + ":\n" + input_string,
@@ -139,7 +139,7 @@ providers = {
     "gemini": {
         "url": "https://generativelanguage.googleapis.com/v1beta/models/",
         "api_key": "GEMINI_API_KEY",
-        "default_model": "gemini-1.5-flash",
+        "default_model": "gemini-1.5-flash-002",
         "wrapper": get_response_gemini,
     },
 
@@ -211,7 +211,7 @@ if args.verbose:
 
 # Add system info to prompt
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
-prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
+system_prompt = system_prompt + "\nHere is the output of hostnamectl\n" + system_info
 
 
 # Get key
