@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import google.generativeai as genai
+import requests
+import json
 import sys
 import os
 import subprocess
@@ -15,43 +16,41 @@ parser = argparse.ArgumentParser(
     epilog="eschaton",
 )
 
-# TODO add a way to control other tmux session or pane
-# TODO make -Ar work with external control by adding command to own session
-# TODO add way to change number of scrollback lines given in prompt
-# TODO add way to get propmpt from file
-# TODO add a way to log commands
-# TODO add other ai apis
 parser.add_argument(
-    "-A", "--auto", help="automatically run command. be weary", action="store_true"
+    "-A", "--auto", help="automatically run command. be weary",
+    action="store_true"
 )
 parser.add_argument(
-    "-r", "--recursive", help="add ;ai to the end of the ai suggested command", action="store_true"
+    "-r", "--recursive", help="add ;ai to the end of the ai suggested command",
+    action="store_true"
 )
 parser.add_argument(
-    "-p", "--pro", help="use gemini pro model instead", action="store_true"
+    "-p", "--pro", help="use a more advanced model",
+    action="store_true"
 )
 parser.add_argument(
-    "-t", "--terse", help="only return command no explanation", action="store_true"
+    "-t", "--terse", help="only return command no explanation",
+    action="store_true"
 )
 parser.add_argument(
-    "-v", "--verbose", help="verbose mode", action="store_true"
+    "-v", "--verbose", help="verbose mode",
+    action="store_true"
 )
 parser.add_argument(
-    "--debug", help="skips api request and sets message to something mundane" ,action="store_true"
+    "--debug", help="skips api request and sets message to something mundane",
+    action="store_true"
 )
 
-flag_thing, arg_input = parser.parse_known_args()
-# TODO why did I do this
-flags = {x: y for x, y in vars(flag_thing).items() if y is True}.keys()
+args, arg_input = parser.parse_known_args()
 
-if "verbose" in flags:
+if args.verbose:
     print("Flags: ".ljust(VERBOSELEN), end="")
-    print(" ".join(flags))
+    print(args)
     print("Prompt prefix: ".ljust(VERBOSELEN), end="")
     print(" ".join(arg_input))
 
 prompt = """
-You are an AI assistant within a shell command 'ai'. You operate by reading the 
+You are an AI assistant within a shell command 'ai'. You operate by reading the
 users scrollback. You can not see interactive input. Here are your guidelines:
 
 - DO ensure you present one command per response at the end, in a code block:
@@ -77,27 +76,25 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 
 - If no command seems necessary, gather info or give a command for the user to explore.
 """
-# TODO find  a better way to get system info
+
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
-
-if "pro" in flags:
-    model = "gemini-1.5-pro-002"
+if args.pro:
+    model = "openai/gpt-4-turbo-preview"
 else:
-    model = "gemini-1.5-flash-002"
+    model = "nousresearch/hermes-3-llama-3.1-405b:free"
 
 try:
-    genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+    OPENROUTER_API_KEY = os.environ["OPENROUTER_API_KEY"]
+    YOUR_SITE_URL = ""
+    YOUR_APP_NAME = "shellai"
 except KeyError:
-    print("need GEMINI_API_KEY environment variable")
+    print("need OPENROUTER_API_KEY environment variable")
     quit()
-
-model = genai.GenerativeModel(model_name=model, system_instruction=prompt)
 
 
 def clean_command(c: str) -> str:
-
     subs = {
             '"': '\\"',
             "\n": "",
@@ -115,22 +112,43 @@ elif os.getenv("TMUX") != "":
     ib = subprocess.check_output("tmux capture-pane -pS -1000", shell=True)
     input_string = ib.decode("utf-8")
 
-
 prefix_input = ""
 if len(arg_input) > 0:
     prefix_input = " ".join(arg_input)
 
-
 if prefix_input + input_string != "":
-    if "verbose" in flags:
-        print("Tokens:".ljust(VERBOSELEN), end="")
-        print(model.count_tokens(prefix_input + ":\n" + input_string))
+    if args.verbose:
+        print("Using model:".ljust(VERBOSELEN), end="")
+        print(model)
 
-    if "debug" in flags:
+    if args.debug:
         response = """test msg \n echo test \n echo test \n"""
     else:
-        r = model.generate_content(prefix_input + ":\n" + input_string)
-        response = r.text
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": prefix_input + ":\n" + input_string}
+        ]
+
+        response = requests.post(
+            url="https://openrouter.ai/api/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+                "HTTP-Referer": YOUR_SITE_URL,
+                "X-Title": YOUR_APP_NAME,
+            },
+            data=json.dumps({
+                "model": model,
+                "messages": messages
+            })
+        )
+
+        if response.status_code == 200:
+            response_data = response.json()
+            response = response_data['choices'][0]['message']['content']
+        else:
+            print(f"Error: {response.status_code}")
+            print(response.text)
+            quit()
 
     # Extract a command from the response
     command = None
@@ -145,19 +163,19 @@ if prefix_input + input_string != "":
         command = resp[-1]
         response = "\n".join(resp[0:-1])
 
-    if not ("terse" in flags):
+    if not args.terse:
         print(re.sub(r"```.*?```", "", response, flags=re.DOTALL))
 
     if command:
         command = clean_command(command)
-        enter = "ENTER" if "auto" in flags else ""
-        if "recursive" in flags:
+        enter = "ENTER" if args.auto else ""
+        if args.recursive:
             command = command + ";ai " + " ".join(sys.argv[1:])
         subprocess.run(
             " ".join(["tmux send-keys", '"' + command + '"', enter]), shell=True
         )
         print("\n")
-        if "auto" in flags:
+        if args.auto:
             sleep(2)
 
 else:
