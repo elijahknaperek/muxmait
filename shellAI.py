@@ -86,6 +86,8 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 
 - DO use commands like `sed` or `echo >>` for file edits, or other non-interactive commands where applicable.
 
+- DO NOT add anything after command
+
 - If no command seems necessary, gather info or give a command for the user to explore.
 
 - ONLY ONE COMMAND PER RESPONSE AT END OF RESPONSE
