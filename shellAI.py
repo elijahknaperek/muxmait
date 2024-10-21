@@ -66,7 +66,7 @@ def get_response_debug() -> str:
     return response
 
 
-def get_response_openrouter() -> str:
+def get_response_default() -> str:
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": prefix_input + ":\n" + input_string}
@@ -152,13 +152,13 @@ providers = {
         "url": "https://openrouter.ai/api/v1/chat/completions",
         "api_key": "OPENROUTER_API_KEY",
         "default_model": "nousresearch/hermes-3-llama-3.1-405b:free",
-        "wrapper": get_response_openrouter,
+        "wrapper": get_response_default,
     },
     "xai": {
         "url": "https://api.x.ai/v1/chat/completions",
         "api_key": "XAI_API_KEY",
         "default_model": "grok-beta",
-        "wrapper": get_response_openrouter,
+        "wrapper": get_response_default,
     },
     "gemini": {
         "url": "https://generativelanguage.googleapis.com/v1beta/models/",
@@ -176,13 +176,13 @@ providers = {
         "url": "https://api.together.xyz/v1/chat/completions",
         "api_key": "TOGETHER_API_KEY",
         "default_model": "meta-llama/Llama-Vision-Free",
-        "wrapper": get_response_openrouter,
+        "wrapper": get_response_default,
     },
     "openai": {
         "url": "https://api.openai.com/v1/chat/completions",
         "api_key": "OPENAI_API_KEY",
         "default_model": "gpt-4o-mini",
-        "wrapper": get_response_openrouter,
+        "wrapper": get_response_default,
     }
 
 }
