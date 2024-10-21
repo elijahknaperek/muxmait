@@ -25,8 +25,7 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
-    "-p", "--pro", help="use a more advanced model",
-    action="store_true"
+    "-m", "--model", help="change model.",
 )
 parser.add_argument(
     "-t", "--terse", help="only return command no explanation",
@@ -42,6 +41,7 @@ parser.add_argument(
 )
 
 args, arg_input = parser.parse_known_args()
+
 
 if args.verbose:
     print("Flags: ".ljust(VERBOSELEN), end="")
@@ -80,8 +80,8 @@ users scrollback. You can not see interactive input. Here are your guidelines:
 system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
 prompt = prompt + "\nHere is the output of hostnamectl\n" + system_info
 
-if args.pro:
-    model = "openai/gpt-4-turbo-preview"
+if args.model != "":
+    model = args.model
 else:
     model = "nousresearch/hermes-3-llama-3.1-405b:free"
 
