@@ -8,7 +8,7 @@ import re
 import argparse
 from time import sleep
 
-VERBOSELEN = 20
+VERBOSE_LEN = 20
 
 
 def clean_command(c: str) -> str:
@@ -66,13 +66,13 @@ args, arg_input = parser.parse_known_args()
 
 
 if args.verbose:
-    print("Flags: ".ljust(VERBOSELEN), end="")
+    print("Flags: ".ljust(VERBOSE_LEN), end="")
     print(args)
-    print("Prompt prefix: ".ljust(VERBOSELEN), end="")
+    print("Prompt prefix: ".ljust(VERBOSE_LEN), end="")
     print(" ".join(arg_input))
-    print("Using model:".ljust(VERBOSELEN), end="")
+    print("Using model:".ljust(VERBOSE_LEN), end="")
     print(args.model)
-    print("Target:".ljust(VERBOSELEN), end="")
+    print("Target:".ljust(VERBOSE_LEN), end="")
     print(args.target)
 
 
@@ -127,7 +127,7 @@ input_string: str = ""
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
 elif os.getenv("TMUX") != "":
-    ib = subprocess.check_output("tmux capture-pane -pS -1000", shell=True)
+    ib = subprocess.check_output(f"tmux capture-pane -p -t {args.target} -S -1000", shell=True)
     input_string = ib.decode("utf-8")
 
 # add input from command invocation
@@ -140,8 +140,8 @@ if prefix_input + input_string != "":
 
     if args.debug:
         response = ""
-        response += "input len:".ljust(VERBOSELEN) + str(len(input_string)) + "\n"
-        response += "prefix_input:".ljust(VERBOSELEN) + prefix_input + ":\n"
+        response += "input len:".ljust(VERBOSE_LEN) + str(len(input_string)) + "\n"
+        response += "prefix_input:".ljust(VERBOSE_LEN) + prefix_input + ":\n"
         response += "test code block:\n"
         response += "```bash\n echo " + prefix_input + "\n```\n"
     else:
@@ -183,7 +183,7 @@ if prefix_input + input_string != "":
     # Look for the last code block
     code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)```", response, re.DOTALL)
     if args.verbose:
-        print("code_blocks:".ljust(VERBOSELEN) + ":".join(code_blocks))
+        print("code_blocks:".ljust(VERBOSE_LEN) + ":".join(code_blocks))
     if code_blocks:
         # Get the last line from the last code block
         command = code_blocks[-1].strip().split("\n")[-1]
@@ -211,7 +211,7 @@ if prefix_input + input_string != "":
             command = command + ";ai " + " ".join(sys.argv[1:])
         # send command to shell prompt
         subprocess.run(
-            " ".join(["tmux send-keys", '"' + command + '"', enter]), shell=True
+            " ".join(["tmux send-keys", f"-t {args.target}", f'"{command}"', enter]), shell=True
         )
         # tmux send-keys on own pane will put output in front of ps and on prompt
         # this keeps that output from moving the ps
