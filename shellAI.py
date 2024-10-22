@@ -249,11 +249,15 @@ if args.verbose:
     print(args.model)
     print("Target:".ljust(VERBOSE_LEN), end="")
     print(args.target)
+    print("\n")
 
 
 # Add system info to prompt
-system_info = subprocess.check_output("hostnamectl", shell=True).decode("utf-8")
-system_prompt = system_prompt + "\nHere is the output of hostnamectl\n" + system_info
+with open("/etc/os-release") as f:
+    system_info = {f: v for f, v in
+                   (x.strip().split("=") for x in f.readlines())
+                   }
+system_prompt = system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
 
 
 # Get key
@@ -279,11 +283,18 @@ if len(arg_input) > 0:
 
 # start processing input
 if prefix_input + input_string != "":
+    if args.verbose:
+        print("getting response")
     response: str
     if args.debug:
         response = get_response_debug()
     else:
         response = provider["wrapper"]()
+    if args.verbose:
+        print("raw response")
+        print("------------------------------------------")
+        print(response)
+        print("------------------------------------------")
 
     # Extract a command from the response
     command = None
