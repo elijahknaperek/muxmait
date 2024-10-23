@@ -280,9 +280,18 @@ parser.add_argument(
     Without this only visible pane contents are included""",
     default=0, type=int
 )
+parser.add_argument(
+    "--no-system", help="remove system prompt", action="store_true"
+)
 
 args, arg_input = parser.parse_known_args()
 provider = providers[args.provider]
+
+if args.no_system is True:
+    system_prompt = ""
+    if args.verbose:
+        print("system prompt removed")
+
 if args.model is None:
     args.model = provider["default_model"]
 
@@ -296,8 +305,8 @@ elif os.getenv("TMUX") != "":
             shell=True
         )
     input_string = ib.decode("utf-8")
-# remove shellai invocation from prompt (hopefully)
-input_string = "\n".join(input_string.strip().splitlines()[0:-1])
+    # remove shellai invocation from prompt (hopefully)
+    input_string = "\n".join(input_string.strip().splitlines()[0:-1])
 
 
 if args.verbose:
