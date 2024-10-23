@@ -356,6 +356,11 @@ if prefix_input + input_string != "":
     # add command to Shell Prompt
     if command:
         command = clean_command(command)
+
+        if args.log_commands is not None:
+            with open(args.log_commands, 'a') as f:
+                f.write(command)
+
         # presses enter on target tmux pane
         enter = "ENTER" if args.auto else ""
         # allows user to repeatedly call ai with the same options
