@@ -60,10 +60,15 @@ def clean_command(c: str) -> str:
     return "".join(subs.get(x, x) for x in c)
 
 
-def get_response_debug() -> str:
+def get_response_debug(prompt: str) -> str:
+    if args.verbose:
+        print("raw input")
+        print("------------------------------------------")
+        print(prompt)
+        print("------------------------------------------")
     response = ""
-    response += "input len:".ljust(VERBOSE_LEN) + str(len(input_string)) + "\n"
-    response += "prefix_input:".ljust(VERBOSE_LEN) + prefix_input + ":\n"
+    response += "prompt len:".ljust(VERBOSE_LEN) + str(len(prompt)) + "\n"
+    response += "prefix_input:".ljust(VERBOSE_LEN) + prompt.splitlines()[0:-1][0] + "\n"
     response += "test code block:\n"
     response += "```bash\n echo \"$(" + prefix_input + ")\"\n```\n"
     return response
@@ -300,14 +305,10 @@ if len(arg_input) > 0:
 prompt = prefix_input + ":\n" + input_string
 if prefix_input + input_string != "":
     if args.verbose:
-        print("raw input")
-        print("------------------------------------------")
-        print(prompt)
         print("getting response")
-        print("------------------------------------------")
     response: str
     if args.debug:
-        response = get_response_debug()
+        response = get_response_debug(prompt)
     else:
         response = provider["wrapper"](prompt)
     if args.verbose:
