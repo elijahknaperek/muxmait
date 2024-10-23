@@ -283,6 +283,9 @@ parser.add_argument(
 parser.add_argument(
     "--no-system", help="remove system prompt", action="store_true"
 )
+parser.add_argument(
+    "--delay", help="Delay when using auto", default=2.0, type=float
+)
 
 args, arg_input = parser.parse_known_args()
 provider = providers[args.provider]
@@ -402,7 +405,7 @@ if prefix_input + input_string != "":
 
         # a little delay when using auto so user can hopefully C-c out
         if args.auto:
-            sleep(2)
+            sleep(args.delay)
         # send command to shell prompt
         subprocess.run(
             f'tmux send-keys -t {args.target} "{command}" {enter}', shell=True
