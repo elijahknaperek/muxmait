@@ -12,37 +12,40 @@ VERBOSE_LEN = 20
 YOUR_SITE_URL = ""
 YOUR_APP_NAME = "shellai"
 
+prefix_input: str
+input_string: str
+api_key: str
 
 system_prompt = """
 You are an AI assistant within a shell command 'ai'. You operate by reading the
 users scrollback. You can not see interactive input. Here are your guidelines:
 
-- DO ensure you present one command per response at the end, in a code block:
+DO ensure you present one command per response at the end, in a code block:
   ```bash
   command
   ```
 
-- DO NOT use multiple code blocks. For multiple commands, join with semicolons:
+DO NOT use multiple code blocks. For multiple commands, join with semicolons:
   ```bash
   command1; command2
   ```
 
-- DO precede commands with brief explanations.
+DO precede commands with brief explanations.
 
-- DO NOT rely on your own knowledge; use `command --help` or `man command | cat`
+DO NOT rely on your own knowledge; use `command --help` or `man command | cat`
   so both you and the user understand what is happening.
 
-- DO give a command to gather information when needed.
+DO give a command to gather information when needed.
 
-- Do NOT suggest interactive editors like nano or vim, or other interactive programs.
+Do NOT suggest interactive editors like nano or vim, or other interactive programs.
 
-- DO use commands like `sed` or `echo >>` for file edits, or other non-interactive commands where applicable.
+DO use commands like `sed` or `echo >>` for file edits, or other non-interactive commands where applicable.
 
-- DO NOT add anything after command
+DO NOT add anything after command
 
-- If no command seems necessary, gather info or give a command for the user to explore.
+If no command seems necessary, gather info or give a command for the user to explore.
 
-- ONLY ONE COMMAND PER RESPONSE AT END OF RESPONSE
+ONLY ONE COMMAND PER RESPONSE AT END OF RESPONSE
 """
 
 
@@ -66,10 +69,10 @@ def get_response_debug() -> str:
     return response
 
 
-def get_response_default() -> str:
+def get_response_default(prompt: str) -> str:
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prefix_input + ":\n" + input_string}
+        {"role": "user", "content": prompt }
     ]
 
     response = requests.post(
@@ -103,7 +106,7 @@ def get_response_default() -> str:
     return response
 
 
-def get_response_gemini() -> str:
+def get_response_gemini(prompt: str) -> str:
     try:
         import google.generativeai as genai
     except ModuleNotFoundError:
@@ -115,7 +118,7 @@ def get_response_gemini() -> str:
             system_instruction=system_prompt
             )
     response = model.generate_content(
-            prefix_input + ":\n" + input_string,
+            prompt,
             generation_config=genai.types.GenerationConfig(
                 temperature=0,
                 )
@@ -123,7 +126,7 @@ def get_response_gemini() -> str:
     return response.text
 
 
-def get_response_anthropic() -> str:
+def get_response_anthropic(prompt: str) -> str:
     try:
         import anthropic
     except ModuleNotFoundError:
@@ -137,7 +140,7 @@ def get_response_anthropic() -> str:
             system=system_prompt,
             messages=[
                 {"role": "user",
-                 "content": prefix_input + ":\n" + input_string}
+                 "content": prompt}
             ]
     )
     text_content = []
@@ -211,7 +214,6 @@ parser.add_argument(
 parser.add_argument(
     "-m", "--model", help="change model.",
     default="",
-
 )
 parser.add_argument(
     "-q", "--quiet", help="only return command no explanation",
@@ -232,6 +234,19 @@ parser.add_argument(
 parser.add_argument(
     "-p", "--provider", help="set the api provider (openrouter, xai, etc...)",
     default="openrouter",
+)
+parser.add_argument(
+    "--log", help="log output to given file"
+)
+parser.add_argument(
+    "--log-commands", help="log only commands to file"
+)
+parser.add_argument(
+    "--file", help="read input from file and append to prefix prompt"
+)
+parser.add_argument(
+    "-S", help="Scrollback lines to include in prompt. Without this only visable pane contents are included",
+    default=0, type=int
 )
 
 args, arg_input = parser.parse_known_args()
@@ -282,14 +297,19 @@ if len(arg_input) > 0:
     prefix_input = " ".join(arg_input)
 
 # start processing input
+prompt = prefix_input + ":\n" + input_string
 if prefix_input + input_string != "":
     if args.verbose:
+        print("raw input")
+        print("------------------------------------------")
+        print(prompt)
         print("getting response")
+        print("------------------------------------------")
     response: str
     if args.debug:
         response = get_response_debug()
     else:
-        response = provider["wrapper"]()
+        response = provider["wrapper"](prompt)
     if args.verbose:
         print("raw response")
         print("------------------------------------------")
