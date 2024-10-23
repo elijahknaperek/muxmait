@@ -64,7 +64,7 @@ def get_response_debug(prompt: str) -> str:
     if args.verbose:
         print("raw input")
         print("------------------------------------------")
-        print(prompt)
+        print("\n".join("# "+l for l in prompt.splitlines()))
         print("------------------------------------------")
     response = ""
     response += "prompt len:".ljust(VERBOSE_LEN) + str(len(prompt)) + "\n"
@@ -250,7 +250,7 @@ parser.add_argument(
     "--file", help="read input from file and append to prefix prompt"
 )
 parser.add_argument(
-    "-S", help="Scrollback lines to include in prompt. Without this only visable pane contents are included",
+    "-S", "--scrollback", help="Scrollback lines to include in prompt. Without this only visable pane contents are included",
     default=0, type=int
 )
 
@@ -258,9 +258,20 @@ args, arg_input = parser.parse_known_args()
 provider = providers[args.provider]
 args.model = provider["default_model"]
 
+# get input from stdin or tmux scrollback
+input_string: str = ""
+if not sys.stdin.isatty():
+    input_string = "".join(sys.stdin)
+elif os.getenv("TMUX") != "":
+    ib = subprocess.check_output(f"tmux capture-pane -p -t {args.target} -S -{args.scrollback}", shell=True)
+    input_string = ib.decode("utf-8")
+# remove shellai invocation from prompt (hopefully)
+input_string = "\n".join(input_string.strip().splitlines()[0:-1])
+
+
 if args.verbose:
     print("Flags: ".ljust(VERBOSE_LEN), end="")
-    print(args)
+    print(",\n".ljust(VERBOSE_LEN+2).join(str(vars(args)).split(",")))
     print("Prompt prefix: ".ljust(VERBOSE_LEN), end="")
     print(" ".join(arg_input))
     print("Provider:".ljust(VERBOSE_LEN), end="")
@@ -288,13 +299,6 @@ except KeyError:
     print(f"need {provider["api_key"]} environment variable")
     quit()
 
-# get input from stdin or tmux scrollback
-input_string: str = ""
-if not sys.stdin.isatty():
-    input_string = "".join(sys.stdin)
-elif os.getenv("TMUX") != "":
-    ib = subprocess.check_output(f"tmux capture-pane -p -t {args.target} -S -1000", shell=True)
-    input_string = ib.decode("utf-8")
 
 # add input from command invocation
 prefix_input = ""
