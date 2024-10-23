@@ -64,11 +64,12 @@ def get_response_debug(prompt: str) -> str:
     if args.verbose:
         print("raw input")
         print("------------------------------------------")
-        print("\n".join("# "+l for l in prompt.splitlines()))
+        print("\n".join("# "+line for line in prompt.splitlines()))
         print("------------------------------------------")
     response = ""
     response += "prompt len:".ljust(VERBOSE_LEN) + str(len(prompt)) + "\n"
-    response += "prefix_input:".ljust(VERBOSE_LEN) + prompt.splitlines()[0:-1][0] + "\n"
+    response += "prefix_input:".ljust(VERBOSE_LEN) +\
+                prompt.splitlines()[0:-1][0] + "\n"
     response += "test code block:\n"
     response += "```bash\n echo \"$(" + prefix_input + ")\"\n```\n"
     return response
@@ -77,7 +78,7 @@ def get_response_debug(prompt: str) -> str:
 def get_response_default(prompt: str) -> str:
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt }
+        {"role": "user", "content": prompt}
     ]
 
     response = requests.post(
@@ -150,9 +151,34 @@ def get_response_anthropic(prompt: str) -> str:
     )
     text_content = []
     for content_block in response.content:
-        if isinstance(content_block, dict) and content_block.get('type') == 'text':
+        if (
+            isinstance(content_block, dict) and
+            content_block.get('type') == 'text'
+        ):
             text_content.append(content_block.get('text', ''))
+
     return ' '.join(text_content)
+
+
+def get_response(prompt: str) -> str:
+    if args.verbose:
+        print("getting response")
+    response: str
+    if args.debug:
+        response = get_response_debug(prompt)
+    else:
+        response = provider["wrapper"](prompt)
+    if args.verbose:
+        print("raw response")
+        print("------------------------------------------")
+        print(response)
+        print("------------------------------------------")
+
+    if args.log is not None:
+        with open(args.log, 'a') as log:
+            log.write(response)
+
+    return response
 
 
 providers = {
@@ -252,7 +278,7 @@ parser.add_argument(
 parser.add_argument(
     "-S", "--scrollback",
     help="""Scrollback lines to include in prompt.
-    Without this only visable pane contents are included""",
+    Without this only visible pane contents are included""",
     default=0, type=int
 )
 
@@ -316,27 +342,13 @@ if args.file is not None:
 # start processing input
 prompt = prefix_input + ":\n" + input_string
 if prefix_input + input_string != "":
-    if args.verbose:
-        print("getting response")
-    response: str
-    if args.debug:
-        response = get_response_debug(prompt)
-    else:
-        response = provider["wrapper"](prompt)
-    if args.verbose:
-        print("raw response")
-        print("------------------------------------------")
-        print(response)
-        print("------------------------------------------")
 
-    if args.log is not None:
-        with open(args.log, 'a') as log:
-            log.write(response)
-
+    response = get_response(prompt)
     # Extract a command from the response
     command = None
     # Look for the last code block
-    code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)```", response, re.DOTALL)
+    code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)```",
+                             response, re.DOTALL)
     if args.verbose:
         print("code_blocks:".ljust(VERBOSE_LEN) + ":".join(code_blocks))
     if code_blocks:
@@ -374,7 +386,8 @@ if prefix_input + input_string != "":
                 command = command + ";ai " + " ".join(sys.argv[1:])
             else:
                 subprocess.run(
-                    f'tmux send-keys "ai {" ".join(sys.argv[1:])}" {enter}', shell=True
+                    f'tmux send-keys "ai {" ".join(sys.argv[1:])}" {enter}',
+                    shell=True
                     )
                 print("\n")
 
