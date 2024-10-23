@@ -304,6 +304,9 @@ except KeyError:
 prefix_input = ""
 if len(arg_input) > 0:
     prefix_input = " ".join(arg_input)
+if args.file is not None:
+    with open(args.file) as f:
+        prefix_input += f.read()
 
 # start processing input
 prompt = prefix_input + ":\n" + input_string
