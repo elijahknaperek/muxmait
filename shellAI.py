@@ -324,6 +324,10 @@ if prefix_input + input_string != "":
         print(response)
         print("------------------------------------------")
 
+    if args.log is not None:
+        with open(args.log, 'a') as log:
+            log.write(response)
+
     # Extract a command from the response
     command = None
     # Look for the last code block
