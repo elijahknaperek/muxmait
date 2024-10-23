@@ -281,17 +281,18 @@ parser.add_argument(
     default=0, type=int
 )
 parser.add_argument(
-    "--no-system", help="remove system prompt", action="store_true"
+    "--custom-system", help="File containing custom system prompt",
 )
 parser.add_argument(
-    "--delay", help="Delay when using auto", default=2.0, type=float
+    "--delay", help="amount of time to delay when using auto", default=2.0, type=float
 )
 
 args, arg_input = parser.parse_known_args()
 provider = providers[args.provider]
 
-if args.no_system is True:
-    system_prompt = ""
+if args.custom_system is not None:
+    with open(args.custom_system) as f:
+        system_prompt = f.read()
     if args.verbose:
         print("system prompt removed")
 
