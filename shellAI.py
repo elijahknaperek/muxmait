@@ -244,7 +244,6 @@ parser.add_argument(
 )
 parser.add_argument(
     "-m", "--model", help="change model.",
-    default="",
 )
 parser.add_argument(
     "-q", "--quiet", help="only return command no explanation",
@@ -284,7 +283,8 @@ parser.add_argument(
 
 args, arg_input = parser.parse_known_args()
 provider = providers[args.provider]
-args.model = provider["default_model"]
+if args.model is None:
+    args.model = provider["default_model"]
 
 # get input from stdin or tmux scrollback
 input_string: str = ""
