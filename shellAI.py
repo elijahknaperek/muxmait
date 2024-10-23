@@ -250,7 +250,9 @@ parser.add_argument(
     "--file", help="read input from file and append to prefix prompt"
 )
 parser.add_argument(
-    "-S", "--scrollback", help="Scrollback lines to include in prompt. Without this only visable pane contents are included",
+    "-S", "--scrollback",
+    help="""Scrollback lines to include in prompt.
+    Without this only visable pane contents are included""",
     default=0, type=int
 )
 
@@ -263,7 +265,10 @@ input_string: str = ""
 if not sys.stdin.isatty():
     input_string = "".join(sys.stdin)
 elif os.getenv("TMUX") != "":
-    ib = subprocess.check_output(f"tmux capture-pane -p -t {args.target} -S -{args.scrollback}", shell=True)
+    ib = subprocess.check_output(
+            f"tmux capture-pane -p -t {args.target} -S -{args.scrollback}",
+            shell=True
+        )
     input_string = ib.decode("utf-8")
 # remove shellai invocation from prompt (hopefully)
 input_string = "\n".join(input_string.strip().splitlines()[0:-1])
@@ -359,7 +364,7 @@ if prefix_input + input_string != "":
 
         if args.log_commands is not None:
             with open(args.log_commands, 'a') as f:
-                f.write(command)
+                f.write(command+"\n")
 
         # presses enter on target tmux pane
         enter = "ENTER" if args.auto else ""
