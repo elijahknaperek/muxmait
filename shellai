@@ -52,7 +52,7 @@ ONLY ONE COMMAND PER RESPONSE AT END OF RESPONSE
 def clean_command(c: str) -> str:
     subs = {
             '"': '\\"',
-            "\n": ";",
+            "\n": " ",
             "$": "\\$",
             "`": "\\`",
             "\\": "\\\\",
@@ -360,7 +360,7 @@ if prefix_input + input_string != "":
     # Extract a command from the response
     command = None
     # Look for the last code block
-    code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)```",
+    code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)\n",
                              response, re.DOTALL)
     if args.verbose:
         print("code_blocks:".ljust(VERBOSE_LEN) + ":".join(code_blocks))
