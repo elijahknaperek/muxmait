@@ -19,10 +19,10 @@ A command-line tool that integrates AI assistance directly into your terminal. I
 
 ## Installation
 
-1. Save the script as `ai` in your PATH
+1. Save the script as `shellai` in your PATH
 2. Make it executable:
    ```bash
-   chmod +x ai
+   chmod +x shellai
    ```
 3. Set up your API key for your chosen provider as an environment variable:
    - `OPENROUTER_API_KEY`
@@ -36,13 +36,13 @@ A command-line tool that integrates AI assistance directly into your terminal. I
 
 Basic usage:
 ```bash
-ai [options] [input]
+shellai [options] [input]
 ```
 
 ### Options
 
 - `-A`, `--auto`: Automatically execute the suggested command
-- `-r`, `--recursive`: Add `;ai` to the end of suggested commands
+- `-r`, `--recursive`: Add `;shellai` to the end of suggested commands
 - `-m MODEL`, `--model MODEL`: Specify the AI model to use
 - `-q`, `--quiet`: Only output the command, no explanation
 - `-v`, `--verbose`: Enable verbose mode
@@ -60,22 +60,22 @@ ai [options] [input]
 
 1. Get a command suggestion based on visible terminal content:
    ```bash
-   ai
+   shellai
    ```
 
 2. Get a suggestion for a specific task:
    ```bash
-   ai how to find large files
+   shellai how to find large files
    ```
 
 3. Auto-execute the suggested command:
    ```bash
-   ai -A create a backup of my home directory
+   shellai -A create a backup of my home directory
    ```
 
 4. Use a specific AI provider:
    ```bash
-   ai -p anthropic how do I automate these commands.
+   shellai -p anthropic how do I automate these commands.
    ```
 
 
