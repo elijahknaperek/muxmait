@@ -184,12 +184,8 @@ def get_response(prompt: str) -> str:
     return response
 
 
-def main(prompt: str):
+def extract_command(response: str) -> str:
 
-    response = get_response(prompt)
-    # Extract a command from the response
-    command = None
-    # Look for the last code block
     code_blocks = re.findall(r"```(?:bash|shell)?\n(.+?)\n",
                              response, re.DOTALL)
     if args.verbose:
@@ -199,20 +195,23 @@ def main(prompt: str):
         command = code_blocks[-1].strip().split("\n")[-1]
     else:
         # just take last line as command if no code block
-        resp = response.strip().splitlines()
-        command = resp[-1]
-        response = "\n".join(resp[0:-1])
+        command = response.strip().splitlines()[-1]
+
+    return command
+
+
+def main(prompt: str):
+
+    response = get_response(prompt)
+    # Extract a command from the response
+    command = extract_command(response)
+    # Look for the last code block
 
     if not args.quiet:
         print("\n")
-        if len(code_blocks) == 1 and args.target == default_tmux_target:
-            """ if printing msg remove code block as command will be printed
-             by send-keys if sending to remote target cmd will not be printed
-             by tmux so we skip this. """
-            print(re.sub(r"```.*?\n.*?\n", "", response, flags=re.DOTALL))
-        else:
-            # if ai sends wrong number of commands just print whole msg
-            print(response)
+        response = re.sub(r"```.*?\n.*?\n", "", response, flags=re.DOTALL)
+        response = re.sub(rf"{command}", "", response, flags=re.DOTALL)
+        print(response)
 
     # add command to Shell Prompt
     if command:
@@ -449,7 +448,7 @@ if __name__ == "__main__":
     if args.model is None:
         args.model = provider["default_model"]
 
-# get input from stdin or tmux scrollback
+    # get input from stdin or tmux scrollback
     input_string: str = ""
     if not sys.stdin.isatty():
         input_string = "".join(sys.stdin)
@@ -461,7 +460,6 @@ if __name__ == "__main__":
         input_string = ib.decode("utf-8")
         # remove shellai invocation from prompt (hopefully)
         input_string = "\n".join(input_string.strip().splitlines()[0:-1])
-
 
     if args.verbose:
         print("Flags: ".ljust(VERBOSE_LEN), end="")
@@ -476,16 +474,14 @@ if __name__ == "__main__":
         print(args.target)
         print("\n")
 
-
-# Add system info to prompt
+    # Add system info to prompt
     with open("/etc/os-release") as f:
         system_info = {f: v for f, v in
                        (x.strip().split("=") for x in f.readlines())
                        }
     system_prompt = system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
 
-
-# Get key
+    # Get key
     try:
         api_key = os.environ[provider["api_key"]]
 
@@ -493,8 +489,7 @@ if __name__ == "__main__":
         print(f"need {provider["api_key"]} environment variable")
         quit()
 
-
-# add input from command invocation
+    # add input from command invocation
     prefix_input = ""
     if len(arg_input) > 0:
         prefix_input = " ".join(arg_input)
@@ -502,7 +497,7 @@ if __name__ == "__main__":
         with open(args.file) as f:
             prefix_input += f.read()
 
-# start processing input
+    # start processing input
     prompt = prefix_input + ":\n" + input_string
     if prefix_input + input_string != "":
         main(prompt)
