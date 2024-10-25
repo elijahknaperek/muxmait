@@ -7,6 +7,7 @@ import subprocess
 import re
 import argparse
 from time import sleep
+from bs4 import BeautifulSoup
 
 VERBOSE_LEN = 20
 YOUR_SITE_URL = ""
@@ -181,6 +182,82 @@ def get_response(prompt: str) -> str:
             log.write(response)
 
     return response
+
+
+headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36',
+            }
+
+
+def extract_qa(html_content):
+    # Parse the HTML content
+    soup = BeautifulSoup(html_content, 'html.parser')
+
+    # Extracting questions and answers
+    questions = soup.find_all('div', class_='question')
+    answers = soup.find_all('div', class_='answer')
+
+    markup_output = []
+    if len(questions) < 1 or len(answers) < 1:
+        return ""
+    a = questions[0].find('div', class_='s-prose')
+    markup_output.append(f"### Question \n{a.get_text(strip=True)}\n")
+
+    for i, ans in enumerate(answers[:3], 1):
+
+        answer_text = ans.find('div', class_='s-prose')
+        # Find corresponding answers
+        if answer_text:
+            markup_output.append(f"**Answer: {i}**\n{answer_text.get_text()}\n")
+
+    return '\n'.join(markup_output)
+
+
+def google_search(query):
+    # Constructing the URL for Google search
+    url = f"https://www.google.com/search?q={query}&num=10"
+
+    # Send the request
+    response = requests.get(url, headers=headers)
+
+    # Check if the request was successful
+    if response.status_code != 200:
+        return "Failed to retrieve the webpage."
+
+    # Parse the HTML content
+    soup = BeautifulSoup(response.text, 'html.parser')
+
+    # Find all the search result divs
+    search_results = soup.find_all('div', class_='tF2Cxc')
+
+    results = []
+    for result in search_results[:10]:  # We only want the top 10
+        try:
+
+            # Extract link. Note: Google links are often redirects,
+            # this gets the actual link shown
+            link = result.find('a')['href']
+
+            results.append(link)
+        except:
+            continue
+
+    return results
+
+
+def get_stack_answers(question):
+    res = google_search(question)
+    p = ""
+    responses = []
+    for r in res:
+        responses.append(requests.get(r, headers=headers))
+        if responses[-1].status_code != 200:
+            continue
+        p = extract_qa(responses[-1].text)
+        if len(p) > 100:
+            break
+
+    return responses
 
 
 providers = {
