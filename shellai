@@ -149,18 +149,16 @@ def get_response_anthropic(prompt: str) -> str:
             system=system_prompt,
             messages=[
                 {"role": "user",
-                 "content": prompt}
-            ]
-    )
-    text_content = []
-    for content_block in response.content:
-        if (
-            isinstance(content_block, dict) and
-            content_block.get('type') == 'text'
-        ):
-            text_content.append(content_block.get('text', ''))
-
-    return ' '.join(text_content)
+                 "content": prompt, }
+                ],
+            temperature=0,
+            stop_sequences=["```\n"],
+            )
+    print(response)
+    if isinstance(response.content[0], anthropic.types.TextBlock):
+        return response.content[0].text
+    else:
+        raise Exception
 
 
 def get_response(prompt: str) -> str:
@@ -238,18 +236,21 @@ def put_command(command: str):
                     )
             print("\n")
 
-    # a little delay when using auto so user can hopefully C-c out
-    if args.auto:
-        sleep(args.delay)
     # send command to shell prompt
     subprocess.run(
-            f'tmux send-keys -t {args.target} "{command}" {enter}', shell=True
+            f'tmux send-keys -t {args.target} "{command}"', shell=True
             )
     """ tmux send-keys on own pane will put output in front of ps and
     on prompt this keeps that output from moving the ps. If we are sending
     remote we do not need to worry about this. """
     if args.target == default_tmux_target:
         print("\n")
+
+    # a delay when using auto so user can hopefully C-c out
+    if args.auto:
+        sleep(args.delay)
+
+        subprocess.run(f'tmux send-keys -t {args.target}  {enter}', shell=True)
 
 
 headers = {
@@ -459,7 +460,8 @@ if __name__ == "__main__":
                 )
         input_string = ib.decode("utf-8")
         # remove shellai invocation from prompt (hopefully)
-        input_string = "\n".join(input_string.strip().splitlines()[0:-1])
+        if args.target == default_tmux_target:
+            input_string = "\n".join(input_string.strip().splitlines()[0:-1])
 
     if args.verbose:
         print("Flags: ".ljust(VERBOSE_LEN), end="")
