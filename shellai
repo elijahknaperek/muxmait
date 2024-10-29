@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import litellm
+from litellm.types.utils import ModelResponse
+from typing import cast
 import requests
 import json
 import sys
@@ -61,19 +64,40 @@ def clean_command(c: str) -> str:
     return "".join(subs.get(x, x) for x in c)
 
 
-def get_response_debug(prompt: str) -> str:
+def get_response_debug(prompt: str, system_prompt: str) -> str:
     if args.verbose:
         print("raw input")
         print("------------------------------------------")
         print("\n".join("# "+line for line in prompt.splitlines()))
         print("------------------------------------------")
     response = ""
+    response += "sys prompt len:".ljust(VERBOSE_LEN) + str(len(system_prompt))
     response += "prompt len:".ljust(VERBOSE_LEN) + str(len(prompt)) + "\n"
     response += "prefix_input:".ljust(VERBOSE_LEN) +\
                 prompt.splitlines()[0:-1][0] + "\n"
     response += "test code block:\n"
     response += "```bash\n echo \"$(" + prefix_input + ")\"\n```\n"
     return response
+
+
+def get_response_litellm(prompt: str, system_prompt: str, model: str) -> str:
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": prompt}
+    ]
+    response = cast(ModelResponse, litellm.completion(
+        model=model,
+        messages=messages,
+        temperature=0,
+        stop=["```\n"],
+    ))
+
+    try:
+        return response['choices'][0]['message']['content']
+    except (AttributeError, KeyError):
+        print("unexpected output")
+        print(response)
+        quit()
 
 
 def get_response_default(prompt: str, system_prompt: str) -> str:
@@ -161,14 +185,14 @@ def get_response_anthropic(prompt: str, system_prompt: str) -> str:
         raise Exception
 
 
-def get_response(prompt: str) -> str:
+def get_response(prompt: str, system_prompt: str) -> str:
     if args.verbose:
         print("getting response")
     response: str
     if args.debug:
-        response = get_response_debug(prompt)
+        response = get_response_debug(prompt, system_prompt)
     else:
-        response = provider["wrapper"](prompt)
+        response = provider["wrapper"](prompt, system_prompt)
     if args.verbose:
         print("raw response")
         print("------------------------------------------")
@@ -198,9 +222,9 @@ def extract_command(response: str) -> str:
     return command
 
 
-def main(prompt: str):
+def main(prompt: str, system_prompt: str):
 
-    response = get_response(prompt)
+    response = get_response(prompt, system_prompt)
     # Extract a command from the response
     command = extract_command(response)
     # Look for the last code block
@@ -350,7 +374,6 @@ def auto_overflow(prompt: str):
     if not stack_content:
         if args.verbose:
             print("No relevant Stack Overflow answers found")
-        return main(prompt)
 
     # Combine original prompt with stack overflow content
     enhanced_prompt = f"""
@@ -364,7 +387,6 @@ Based on this information, what command should I run?
 """
 
     # Get final command suggestion
-    return main(enhanced_prompt)
 
 
 providers = {
@@ -542,6 +564,6 @@ if __name__ == "__main__":
     # start processing input
     prompt = prefix_input + ":\n" + input_string
     if prefix_input + input_string != "":
-        main(prompt)
+        main(prompt, input_system_prompt)
     else:
         print("no input")
