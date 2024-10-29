@@ -17,7 +17,7 @@ prefix_input: str
 input_string: str
 api_key: str
 
-system_prompt = """
+default_system_prompt = """
 You are an AI assistant within a shell command 'shellai'. You operate by reading the
 users scrollback. You can not see interactive input. Here are your guidelines:
 
@@ -76,7 +76,7 @@ def get_response_debug(prompt: str) -> str:
     return response
 
 
-def get_response_default(prompt: str) -> str:
+def get_response_default(prompt: str, system_prompt: str) -> str:
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": prompt}
@@ -114,7 +114,7 @@ def get_response_default(prompt: str) -> str:
     return response
 
 
-def get_response_gemini(prompt: str) -> str:
+def get_response_gemini(prompt: str, system_prompt: str) -> str:
     try:
         import google.generativeai as genai
     except ModuleNotFoundError:
@@ -135,7 +135,7 @@ def get_response_gemini(prompt: str) -> str:
     return response.text
 
 
-def get_response_anthropic(prompt: str) -> str:
+def get_response_anthropic(prompt: str, system_prompt: str) -> str:
     try:
         import anthropic
     except ModuleNotFoundError:
@@ -258,7 +258,7 @@ headers = {
             }
 
 
-def extract_qa(html_content):
+def extract_qa(html_content: str) -> str:
     # Parse the HTML content
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -282,16 +282,13 @@ def extract_qa(html_content):
     return '\n'.join(markup_output)
 
 
-def google_search(query):
+def google_search(query: str) -> list[str]:
     # Constructing the URL for Google search
     url = f"https://www.google.com/search?q={query}&num=10"
 
     # Send the request
     response = requests.get(url, headers=headers)
-
-    # Check if the request was successful
-    if response.status_code != 200:
-        return "Failed to retrieve the webpage."
+    response.raise_for_status()
 
     # Parse the HTML content
     soup = BeautifulSoup(response.text, 'html.parser')
@@ -314,19 +311,60 @@ def google_search(query):
     return results
 
 
-def get_stack_answers(question):
+def get_stack_answers(question: str) -> str:
     res = google_search(question)
     p = ""
-    responses = []
     for r in res:
-        responses.append(requests.get(r, headers=headers))
-        if responses[-1].status_code != 200:
+        r = (requests.get(r, headers=headers))
+        if r.status_code != 200:
             continue
-        p = extract_qa(responses[-1].text)
-        if len(p) > 100:
+        p = extract_qa(r.text)
+        if len(p) > 5:
             break
 
-    return responses
+    return p
+
+
+def auto_overflow(prompt: str):
+    """
+    1. Use ai to formulate question based on scrollback and/or user input.
+    2. Search google with question.
+    3. Get first stack exchange link and parse it.
+    4. Give stack exchange info to ai and return command to user.
+    """
+    # First get AI to formulate a clear question
+    messages = [
+            {"role": "system", "content": "Convert this terminal context into a clear technical question for Stack Overflow:"},
+            {"role": "user", "content": prompt}
+            ]
+
+    response = provider["wrapper"](json.dumps(messages))
+    question = extract_command(response).strip('"\'')
+
+    if args.verbose:
+        print("Searching for: " + question)
+
+    # Get stack overflow answers
+    stack_content = get_stack_answers(question + " site:stackoverflow.com")
+
+    if not stack_content:
+        if args.verbose:
+            print("No relevant Stack Overflow answers found")
+        return main(prompt)
+
+    # Combine original prompt with stack overflow content
+    enhanced_prompt = f"""
+Context from user:
+{prompt}
+
+Relevant Stack Overflow information:
+{stack_content}
+
+Based on this information, what command should I run?
+"""
+
+    # Get final command suggestion
+    return main(enhanced_prompt)
 
 
 providers = {
@@ -442,9 +480,11 @@ if __name__ == "__main__":
 
     if args.system_prompt is not None:
         with open(args.system_prompt) as f:
-            system_prompt = f.read()
+            input_system_prompt = f.read()
         if args.verbose:
             print("system prompt removed")
+    else:
+        input_system_prompt = default_system_prompt
 
     if args.model is None:
         args.model = provider["default_model"]
@@ -481,7 +521,7 @@ if __name__ == "__main__":
         system_info = {f: v for f, v in
                        (x.strip().split("=") for x in f.readlines())
                        }
-    system_prompt = system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
+    input_system_prompt = input_system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
 
     # Get key
     try:
