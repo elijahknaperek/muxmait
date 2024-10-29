@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
-from google.auth import default
 import litellm
 from litellm.types.utils import ModelResponse
 from typing import cast
 import requests
-import json
 import sys
 import os
 import subprocess
