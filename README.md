@@ -106,12 +106,6 @@ shellai [options] [input]
 - **API credentials**: Secure your API keys and avoid exposing them in scripts or logs
 - **Recursive mode**: Use `-r` flag with extreme caution as it can create command loops
 
-## Limitations
-
-- Requires TMux for operation
-- API rate limits apply based on provider
-
-
 ## Troubleshooting
 
 - Enable verbose mode (-v) for detailed operation information
