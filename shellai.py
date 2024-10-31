@@ -284,8 +284,8 @@ def auto_overflow(prompt: str):
     # First get AI to formulate a clear question
 
     question = get_response(prompt,
-                            make_google_search_sys_prompt,
-                            "gemini/gemini-1.5-flash-latest")
+                            make_google_search_sys_prompt, 
+                            args.model_stackexchange)
 
     if args.verbose:
         print("Searching for: " + question)
@@ -312,10 +312,11 @@ Possibly Relevant Stack Overflow information, Only consider if relevant to users
 
 model_list = [
         "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
-        "gemini/gemini-1.5-flash-002",
-        "gemini/gemini-1.5-pro",
+        "gemini/gemini-1.5-flash-latest",
+        "gemini/gemini-1.5-pro-latest",
         "anthropic/claude-3-5-sonnet-latest",
         "together_ai/meta-llama/Llama-Vision-Free",
+        "openrouter/qwen/qwen-2-7b-instruct:free",
         ]
 
 
@@ -341,7 +342,7 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
-    "-m", "--model", help=f"set model. Default is {model_list[0]}",
+    "-m", "--model", help=f"Set model. Default is {model_list[0]}. You can also pass a number to select from model list",
     default=model_list[0]
 )
 parser.add_argument(
@@ -385,10 +386,25 @@ parser.add_argument(
     "-c", "--add-stackexchange", help="if set adds context from stack overflow",
     action="store_true",
 )
+parser.add_argument(
+    "-M", "--model-stackexchange", help="Model to use in order to create google search query for stack exchange content",
+    default="gemini/gemini-1.5-flash-latest"
+)
 
 if __name__ == "__main__":
 
     args, arg_input = parser.parse_known_args()
+
+    # let user select model from model list
+    try:
+        args.model = model_list[int(args.model)]
+    except ValueError:
+        pass
+    except IndexError:
+        print("number not in model list")
+        for i, m in enumerate(model_list):
+            print(f"{i}:        {m}")
+        quit()
 
     if args.system_prompt is not None:
         with open(args.system_prompt) as f:
