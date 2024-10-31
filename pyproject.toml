@@ -3,12 +3,12 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [ project ]
-name = "shellai"
+name = "shellai-tmux"
 version = "0.1.0"
 description = "AI-powered shell assistant that uses tmux"
 readme = "README.md"
 authors = [{ name = "Elijah Knaperek", email = "elijahknaperek@gmail.com" }]
-license = { file = "LICENSE" }
+license = { text = "GPLv3" }
 classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Programming Language :: Python",
