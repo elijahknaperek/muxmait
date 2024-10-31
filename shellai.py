@@ -60,6 +60,7 @@ Remember only 35 words max. Return one query.
 Remove any identifying info or specific file paths.
 """
 
+
 def clean_command(c: str) -> str:
     subs = {
             '"': '\\"',
