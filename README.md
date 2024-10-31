@@ -19,16 +19,11 @@ A command-line tool that integrates AI assistance directly into your terminal. I
 
 ## Installation
 
-1. Save the script as `shellai` in your PATH
-2. Make it executable:
+1. Install required Python packages:
    ```bash
-   chmod +x shellai
+   pip install shellai-tmux
    ```
-3. Install required Python packages:
-   ```bash
-   pip install litellm beautifulsoup4 requests
-   ```
-4. Set up your API key for your chosen provider as an environment variable:
+2. Set up your API key for your chosen provider as an environment variable:
    The tool looks for API keys in environment variables based on the chosen model:
    ```bash
    # Example API key setup
