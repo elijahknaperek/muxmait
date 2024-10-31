@@ -18,9 +18,8 @@ VERBOSE_LEN = 20
 YOUR_SITE_URL = ""
 YOUR_APP_NAME = "shellai"
 
+args: argparse.Namespace
 prefix_input: str
-input_string: str
-api_key: str
 
 default_system_prompt = """
 You are an AI assistant within a shell command 'shellai'. You operate by reading the
@@ -147,7 +146,7 @@ def extract_command(response: str) -> str:
     return command
 
 
-def main(prompt: str, system_prompt: str, model: str):
+def process_prompt(prompt: str, system_prompt: str, model: str):
 
     response = get_response(prompt, system_prompt, model)
     # Extract a command from the response
@@ -309,6 +308,92 @@ Possibly Relevant Stack Overflow information, Only consider if relevant to users
 """
 
 
+def main():
+
+    global args, prefix_input
+
+    args, arg_input = parser.parse_known_args()
+
+    # let user select model from model list
+    try:
+        args.model = model_list[int(args.model)]
+    except ValueError:
+        pass
+    except IndexError:
+        print("number not in model list")
+        for i, m in enumerate(model_list):
+            print(f"{i}:        {m}")
+        quit()
+
+    # same for stack exchange model
+    try:
+        args.model_stackexchange = model_list[int(args.model_stackexchange)]
+    except ValueError:
+        pass
+    except IndexError:
+        print("number not in model list")
+        for i, m in enumerate(model_list):
+            print(f"{i}:        {m}")
+        quit()
+
+    if args.system_prompt is not None:
+        with open(args.system_prompt) as f:
+            input_system_prompt = f.read()
+        if args.verbose:
+            print("system prompt removed")
+    else:
+        input_system_prompt = default_system_prompt
+
+    # get input from stdin or tmux scrollback
+    input_string: str = ""
+    if not sys.stdin.isatty():
+        input_string = "".join(sys.stdin)
+    elif os.getenv("TMUX") != "":
+        ib = subprocess.check_output(
+                f"tmux capture-pane -p -t {args.target} -S -{args.scrollback}",
+                shell=True
+                )
+        input_string = ib.decode("utf-8")
+        # remove shellai invocation from prompt (hopefully)
+        if args.target == default_tmux_target:
+            input_string = "\n".join(input_string.strip().splitlines()[0:-1])
+
+    if args.verbose:
+        print("Flags: ".ljust(VERBOSE_LEN), end="")
+        print(",\n".ljust(VERBOSE_LEN+2).join(str(vars(args)).split(",")))
+        print("Prompt prefix: ".ljust(VERBOSE_LEN), end="")
+        print(" ".join(arg_input))
+        print("Using model:".ljust(VERBOSE_LEN), end="")
+        print(args.model)
+        print("Target:".ljust(VERBOSE_LEN), end="")
+        print(args.target)
+        print("\n")
+
+    # Add system info to prompt
+    with open("/etc/os-release") as f:
+        system_info = {f: v for f, v in
+                       (x.strip().split("=") for x in f.readlines())
+                       }
+    input_system_prompt = input_system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
+
+    # add input from command invocation
+    prefix_input = ""
+    if len(arg_input) > 0:
+        prefix_input = " ".join(arg_input)
+    if args.file is not None:
+        with open(args.file) as f:
+            prefix_input += f.read()
+
+    # start processing input
+    prompt = prefix_input + "\n\n Here is the terminal output:\n" + input_string
+
+    if args.add_stackexchange:
+        prompt = auto_overflow(prompt)
+
+    if prefix_input + input_string != "":
+        process_prompt(prompt, input_system_prompt, args.model)
+    else:
+        print("no input")
 
 model_list = [
         "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
@@ -392,86 +477,4 @@ parser.add_argument(
 )
 
 if __name__ == "__main__":
-
-    args, arg_input = parser.parse_known_args()
-
-    # let user select model from model list
-    try:
-        args.model = model_list[int(args.model)]
-    except ValueError:
-        pass
-    except IndexError:
-        print("number not in model list")
-        for i, m in enumerate(model_list):
-            print(f"{i}:        {m}")
-        quit()
-
-    # same for stack exchange model
-    try:
-        args.model_stackexchange = model_list[int(args.model_stackexchange)]
-    except ValueError:
-        pass
-    except IndexError:
-        print("number not in model list")
-        for i, m in enumerate(model_list):
-            print(f"{i}:        {m}")
-        quit()
-
-    if args.system_prompt is not None:
-        with open(args.system_prompt) as f:
-            input_system_prompt = f.read()
-        if args.verbose:
-            print("system prompt removed")
-    else:
-        input_system_prompt = default_system_prompt
-
-    # get input from stdin or tmux scrollback
-    input_string: str = ""
-    if not sys.stdin.isatty():
-        input_string = "".join(sys.stdin)
-    elif os.getenv("TMUX") != "":
-        ib = subprocess.check_output(
-                f"tmux capture-pane -p -t {args.target} -S -{args.scrollback}",
-                shell=True
-                )
-        input_string = ib.decode("utf-8")
-        # remove shellai invocation from prompt (hopefully)
-        if args.target == default_tmux_target:
-            input_string = "\n".join(input_string.strip().splitlines()[0:-1])
-
-    if args.verbose:
-        print("Flags: ".ljust(VERBOSE_LEN), end="")
-        print(",\n".ljust(VERBOSE_LEN+2).join(str(vars(args)).split(",")))
-        print("Prompt prefix: ".ljust(VERBOSE_LEN), end="")
-        print(" ".join(arg_input))
-        print("Using model:".ljust(VERBOSE_LEN), end="")
-        print(args.model)
-        print("Target:".ljust(VERBOSE_LEN), end="")
-        print(args.target)
-        print("\n")
-
-    # Add system info to prompt
-    with open("/etc/os-release") as f:
-        system_info = {f: v for f, v in
-                       (x.strip().split("=") for x in f.readlines())
-                       }
-    input_system_prompt = input_system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
-
-    # add input from command invocation
-    prefix_input = ""
-    if len(arg_input) > 0:
-        prefix_input = " ".join(arg_input)
-    if args.file is not None:
-        with open(args.file) as f:
-            prefix_input += f.read()
-
-    # start processing input
-    prompt = prefix_input + "\n\n Here is the terminal output:\n" + input_string
-
-    if args.add_stackexchange:
-        prompt = auto_overflow(prompt)
-
-    if prefix_input + input_string != "":
-        main(prompt, input_system_prompt, args.model)
-    else:
-        print("no input")
+    main()

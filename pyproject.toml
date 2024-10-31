@@ -1,0 +1,30 @@
+[ build-system ]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[ project ]
+name = "shellai"
+version = "0.1.0"
+description = "AI-powered shell assistant that uses tmux"
+readme = "README.md"
+authors = [{ name = "Elijah Knaperek", email = "elijahknaperek@gmail.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Environment :: Console",
+]
+keywords = ["ai", "shell", "tmux", "assistant", "terminal"]
+dependencies = [
+    "litellm>=1.0.0",
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+]
+requires-python = ">=3.8"
+
+[ project.urls ]
+Homepage = "https://github.com/elijahknaperek/shellai"
+
+[ project.scripts ]
+shellai = "shellai:main"
