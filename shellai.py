@@ -395,6 +395,7 @@ def main():
     else:
         print("no input")
 
+
 model_list = [
         "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
         "gemini/gemini-1.5-flash-latest",
