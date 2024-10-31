@@ -406,6 +406,17 @@ if __name__ == "__main__":
             print(f"{i}:        {m}")
         quit()
 
+    # same for stack exchange model
+    try:
+        args.model_stackexchange = model_list[int(args.model_stackexchange)]
+    except ValueError:
+        pass
+    except IndexError:
+        print("number not in model list")
+        for i, m in enumerate(model_list):
+            print(f"{i}:        {m}")
+        quit()
+
     if args.system_prompt is not None:
         with open(args.system_prompt) as f:
             input_system_prompt = f.read()
