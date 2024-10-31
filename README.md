@@ -1,13 +1,13 @@
 # Shell AI Assistant
 
-A command-line tool that integrates AI assistance directly into your terminal. It reads your shell history and provides contextually aware command suggestions using various AI models through litellm.
+A command-line tool that integrates AI assistance directly into your terminal. It reads your tmux pane content and provides contextually aware command suggestions using various AI models through litellm.
 
 ## Features
 
-- Reads your tmux pane directly and sends content to your choice of AI model (Currently openrouter/nousresearch/hermes-3-llama-3.1-405b:free by default)
-- Automatically parses commands out of AI responses and puts them into your prompt for easy execution
-- Optional Stack Exchange integration to provide additional context from relevant Q&A
-- Embrace the danger with --auto and --recursive flags to make shellai automatically execute AI suggested commands and then call itself again in a loop
+- Reads your tmux pane content and sends it to your choice of AI model
+- Automatically parses commands from AI responses and puts them into your prompt
+- Optional Stack Exchange integration to provide additional context from relevant stack exchange google search.
+- Terrible and poorly thought out features like auto-execution and recursive mode for automated system destruction.
 
 ## Prerequisites
 
@@ -15,6 +15,7 @@ A command-line tool that integrates AI assistance directly into your terminal. I
 - TMux
 - litellm
 - BeautifulSoup4 (for Stack Exchange integration)
+- requests
 
 ## Installation
 
@@ -23,11 +24,19 @@ A command-line tool that integrates AI assistance directly into your terminal. I
    ```bash
    chmod +x shellai
    ```
-3. Set up your API key for your chosen provider as an environment variable:
-   - `OPENROUTER_API_KEY`
-   - `GEMINI_API_KEY`
-   - `ANTHROPIC_API_KEY`
-   - `TOGETHER_API_KEY`
+3. Install required Python packages:
+   ```bash
+   pip install litellm beautifulsoup4 requests
+   ```
+4. Set up your API key for your chosen provider as an environment variable:
+   The tool looks for API keys in environment variables based on the chosen model:
+   ```bash
+   # Example API key setup
+   export OPENROUTER_API_KEY="your-key-here"
+   export ANTHROPIC_API_KEY="your-key-here"
+   export GEMINI_API_KEY="your-key-here"
+   export TOGETHER_API_KEY="your-key-here"
+   ```
    - And any others supported by litellm
 
 ## Usage
@@ -39,24 +48,25 @@ shellai [options] [input]
 
 ### Options
 
-- `-A`, `--auto`: Automatically execute the suggested command
-- `-r`, `--recursive`: Add `;shellai` to the end of suggested commands
-- `-m MODEL`, `--model MODEL`: Specify the AI model to use (default: openrouter/nousresearch/hermes-3-llama-3.1-405b:free)
-- `-q`, `--quiet`: Only output the command, no explanation
-- `-v`, `--verbose`: Enable verbose mode
+- `-A`, `--auto`: Automatically execute the suggested command (use with caution)
+- `-r`, `--recursive`: Add `;shellai` to the end of suggested commands for continuous operation
+- `-m MODEL`, `--model MODEL`: Choose AI model (can use number 0-5 to select from model list)
+- `-q`, `--quiet`: Only output the command without explanation
+- `-v`, `--verbose`: Enable verbose mode with detailed output
 - `--debug`: Run in debug mode (skips API request)
-- `-t TARGET`, `--target TARGET`: Specify target TMux pane
+- `-t TARGET`, `--target TARGET`: Specify target TMux pane (default: current pane)
 - `--log FILE`: Log all output to specified file
 - `--log-commands FILE`: Log only commands to specified file
-- `--file FILE`: Read additional input from file
-- `-S LINES`, `--scrollback LINES`: Number of scrollback lines to include
+- `--file FILE`: Read additional input from specified file
+- `-S LINES`, `--scrollback LINES`: Number of scrollback lines to include from tmux (default: 0)
 - `--system-prompt FILE`: Use custom system prompt from file
-- `--delay SECONDS`: Set delay for auto-execution (default: 2.0)
+- `--delay SECONDS`: Set delay before auto-execution (default: 2.0 seconds)
 - `-c`, `--add-stackexchange`: Add relevant context from Stack Exchange
+- `-M MODEL`, `--model-stackexchange MODEL`: Specify model for Stack Exchange search query generation (default: gemini/gemini-1.5-flash-latest)
 
 ### Examples
 
-1. Get a command suggestion based on visible terminal content:
+1. Basic command suggestion based on visible terminal content:
    ```bash
    shellai
    ```
@@ -66,30 +76,50 @@ shellai [options] [input]
    shellai how to find large files
    ```
 
-3. Use a specific AI model:
+3. Use a specific model by number or name:
    ```bash
+   shellai -m 3 how do I automate these commands
+   # or
    shellai -m anthropic/claude-3-5-sonnet-latest how do I automate these commands
    ```
 
-4. Include Stack Exchange context:
+4. Include Stack Exchange context with custom model:
    ```bash
-   shellai -c how to compress images in bulk
+   shellai -c -M gemini/gemini-1.5-pro-latest how to compress images in bulk
    ```
 
-## Security Notes
+5. Auto-execute commands with auto and recursive mode(or don't):
+   ```bash
+   shellai -A -r process these files  # DO NOT DO THIS
+   ```
 
-- Be cautious with `--auto` flag as it executes commands without confirmation
-- Review suggested commands before execution
-- Be mindful of sending terminal content to AI providers
+6. Include more context from terminal history:
+   ```bash
+   shellai -S 100 why won't this compile
+   ```
+
+## Security Considerations
+
+- **Review commands before execution**: Always review suggested commands before running them
+- **Auto-execution risks**: The `-A` flag will execute commands without confirmation
+- **Data privacy**: Be mindful that terminal content is sent to AI providers
+- **API credentials**: Secure your API keys and avoid exposing them in scripts or logs
+- **Recursive mode**: Use `-r` flag with extreme caution as it can create command loops
 
 ## Limitations
 
-- Requires TMux for full functionality
+- Requires TMux for operation
 - API rate limits apply based on provider
+
+
+## Troubleshooting
+
+- Enable verbose mode (-v) for detailed operation information
+- Check API key environment variables if model requests fail
 
 ## Contributing
 
-Feel free to submit issues and enhancement requests!
+Contributions are welcome! Please feel free to submit issues and enhancement requests.
 
 ## License
 
