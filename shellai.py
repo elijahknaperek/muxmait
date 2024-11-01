@@ -315,25 +315,19 @@ def main():
     args, arg_input = parser.parse_known_args()
 
     # let user select model from model list
-    try:
-        args.model = model_list[int(args.model)]
-    except ValueError:
-        pass
-    except IndexError:
-        print("number not in model list")
-        for i, m in enumerate(model_list):
-            print(f"{i}:        {m}")
+    if args.model in model_dict:
+        args.model = model_dict[args.model]
+    elif len(args.model) < 4:
+        print("Model quick list")
+        for k, v in model_dict.items():
+            print(f"{k}:    {v}")
         quit()
-
-    # same for stack exchange model
-    try:
-        args.model_stackexchange = model_list[int(args.model_stackexchange)]
-    except ValueError:
-        pass
-    except IndexError:
-        print("number not in model list")
-        for i, m in enumerate(model_list):
-            print(f"{i}:        {m}")
+    if args.model_stackexchange in model_dict:
+        args.model_stackexchange = model_dict[args.model_stackexchange]
+    elif len(args.model_stackexchange) < 4:
+        print("Model quick list")
+        for k, v in model_dict.items():
+            print(f"{k}:    {v}")
         quit()
 
     if args.system_prompt is not None:
@@ -396,15 +390,15 @@ def main():
         print("no input")
 
 
-model_list = [
-        "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
-        "gemini/gemini-1.5-flash-latest",
-        "gemini/gemini-1.5-pro-latest",
-        "anthropic/claude-3-5-sonnet-latest",
-        "together_ai/meta-llama/Llama-Vision-Free",
-        "openrouter/qwen/qwen-2-7b-instruct:free",
-        ]
-
+model_dict = {
+        "nh": "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
+        "gf": "gemini/gemini-1.5-flash-latest",
+        "gp": "gemini/gemini-1.5-pro-latest",
+        "cs": "anthropic/claude-3-5-sonnet-latest",
+        "ch": "claude-3-haiku-20240307",
+        "o4m": "openai/gpt-4o-mini",
+        "o4o": "openai/gpt-4o",
+        }
 
 default_tmux_target = (
             subprocess
@@ -428,8 +422,8 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
-    "-m", "--model", help=f"Set model. Default is {model_list[0]}. You can also pass a number to select from model list",
-    default=model_list[0]
+    "-m", "--model", help=f"Set model. Default is {model_dict["nh"]}. You can also pass a number to select from model list",
+    default=model_dict["nh"]
 )
 parser.add_argument(
     "-q", "--quiet", help="only return command no explanation",
