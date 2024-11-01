@@ -283,7 +283,7 @@ def auto_overflow(prompt: str):
     # First get AI to formulate a clear question
 
     question = get_response(prompt,
-                            make_google_search_sys_prompt, 
+                            make_google_search_sys_prompt,
                             args.model_stackexchange)
 
     if args.verbose:

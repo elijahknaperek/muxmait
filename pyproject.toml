@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [ project ]
 name = "shellai-tmux"
-version = "0.1.0"
+version = "0.1.1"
 description = "AI-powered shell assistant that uses tmux"
 readme = "README.md"
 authors = [{ name = "Elijah Knaperek", email = "elijahknaperek@gmail.com" }]
