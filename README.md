@@ -45,7 +45,7 @@ shellai [options] [input]
 
 - `-A`, `--auto`: Automatically execute the suggested command (use with caution)
 - `-r`, `--recursive`: Add `;shellai` to the end of suggested commands for continuous operation
-- `-m MODEL`, `--model MODEL`: Choose AI model (can use number 0-5 to select from model list)
+- `-m MODEL`, `--model MODEL`: Choose AI model (Can select by shorthand for some models eg.'cs' for claude-3-5-sonnet-latest or 'gf' for gemini/gemini-1.5-flash-latest  )
 - `-q`, `--quiet`: Only output the command without explanation
 - `-v`, `--verbose`: Enable verbose mode with detailed output
 - `--debug`: Run in debug mode (skips API request)
@@ -73,7 +73,7 @@ shellai [options] [input]
 
 3. Use a specific model by number or name:
    ```bash
-   shellai -m 3 how do I automate these commands
+   shellai -m cs how do I automate these commands
    # or
    shellai -m anthropic/claude-3-5-sonnet-latest how do I automate these commands
    ```
