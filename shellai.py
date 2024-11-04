@@ -393,7 +393,7 @@ def main():
     if prefix_input + input_string != "":
         process_prompt(prompt, input_system_prompt, args.model)
     else:
-        print("no input")
+        print("No input. Are you inside tmux?")
 
 
 model_dict = {
