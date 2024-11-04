@@ -278,7 +278,6 @@ def auto_overflow(prompt: str):
     1. Use ai to formulate question based on scrollback and/or user input.
     2. Search google with question.
     3. Get first stack exchange link and parse it.
-    4. Give stack exchange info to ai and return command to user.
     """
     # First get AI to formulate a clear question
 
@@ -299,7 +298,6 @@ def auto_overflow(prompt: str):
         print("-"*80)
     # Combine original prompt with stack overflow content
     return f"""
-Context from user:
 {prompt}
 
 Possibly Relevant Stack Overflow information, Only consider if relevant to users question:
@@ -330,6 +328,7 @@ def main():
             print(f"{k}:    {v}")
         quit()
 
+    # custom system prompt
     if args.system_prompt is not None:
         with open(args.system_prompt) as f:
             input_system_prompt = f.read()
@@ -341,16 +340,20 @@ def main():
     # get input from stdin or tmux scrollback
     input_string: str = ""
     if not sys.stdin.isatty():
-        input_string = "".join(sys.stdin)
-    elif os.getenv("TMUX") != "":
+        input_string += "User input piped in from command:\n"
+        input_string += "".join(sys.stdin)
+        input_string += "\n"
+    if os.getenv("TMUX") != "":
+        input_string += "This is the users terminal:\n"
         ib = subprocess.check_output(
                 f"tmux capture-pane -p -t {args.target} -S -{args.scrollback}",
                 shell=True
                 )
-        input_string = ib.decode("utf-8")
+        input_string += ib.decode("utf-8")
         # remove shellai invocation from prompt (hopefully)
         if args.target == default_tmux_target:
             input_string = "\n".join(input_string.strip().splitlines()[0:-1])
+        input_string += "\n"
 
     if args.verbose:
         print("Flags: ".ljust(VERBOSE_LEN), end="")
@@ -368,7 +371,7 @@ def main():
         system_info = {f: v for f, v in
                        (x.strip().split("=") for x in f.readlines())
                        }
-    input_system_prompt = input_system_prompt + f"user os: {system_info.get('NAME', 'linux')}"
+    input_system_prompt += f"user os: {system_info.get('NAME', 'linux')}"
 
     # add input from command invocation
     prefix_input = ""
@@ -379,7 +382,10 @@ def main():
             prefix_input += f.read()
 
     # start processing input
-    prompt = prefix_input + "\n\n Here is the terminal output:\n" + input_string
+    if prefix_input != "":
+        prompt = prefix_input + ":\n\n" + input_string
+    else:
+        prompt = input_string
 
     if args.add_stackexchange:
         prompt = auto_overflow(prompt)
