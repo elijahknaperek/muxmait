@@ -3,7 +3,7 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [ project ]
-name = "shell-aider"
+name = "muxmait"
 version = "0.1.2"
 description = "AI-powered shell assistant that uses tmux"
 readme = "README.md"
@@ -15,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Environment :: Console",
 ]
-keywords = ["ai", "shell", "tmux", "assistant", "terminal"]
+keywords = ["ai", "shell", "tmux", "assistant", "terminal", "muxmait", "mait"]
 dependencies = [
     "litellm>=1.0.0",
     "beautifulsoup4>=4.12.0",
@@ -24,7 +24,7 @@ dependencies = [
 requires-python = ">=3.8"
 
 [ project.urls ]
-Homepage = "https://github.com/elijahknaperek/shell-aider"
+Homepage = "https://github.com/elijahknaperek/muxmait"
 
 [ project.scripts ]
-aider = "aider:main"
+mait = "mait:main"

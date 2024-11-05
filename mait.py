@@ -16,13 +16,13 @@ litellm.drop_params = True
 
 VERBOSE_LEN = 20
 YOUR_SITE_URL = ""
-YOUR_APP_NAME = "aider"
+YOUR_APP_NAME = "muxmait"
 
 args: argparse.Namespace
 prefix_input: str
 
 default_system_prompt = """
-You are an AI assistant within a shell command 'aider'. You operate by reading the
+You are an AI assistant within a shell command 'mait'. You operate by reading the
 users scrollback. You can not see interactive input. Here are your guidelines:
 
 DO ensure you present one command per response at the end, in a code block:
@@ -176,10 +176,10 @@ def put_command(command: str):
     # allows user to repeatedly call ai with the same options
     if args.recursive:
         if args.target == default_tmux_target:
-            command = command + ";aider " + " ".join(sys.argv[1:])
+            command = command + ";mait " + " ".join(sys.argv[1:])
         else:
             subprocess.run(
-                    f'tmux send-keys "aider {" ".join(sys.argv[1:])}" {enter}',
+                    f'tmux send-keys "mait {" ".join(sys.argv[1:])}" {enter}',
                     shell=True
                     )
             print("\n")
@@ -350,7 +350,7 @@ def main():
                 shell=True
                 )
         input_string += ib.decode("utf-8")
-        # remove aider invocation from prompt (hopefully)
+        # remove mait invocation from prompt (hopefully)
         if args.target == default_tmux_target:
             input_string = "\n".join(input_string.strip().splitlines()[0:-1])
         input_string += "\n"
@@ -415,7 +415,7 @@ default_tmux_target = (
         )
 
 parser = argparse.ArgumentParser(
-    prog="aider",
+    prog="muxmait",
     description="ai terminal assistant",
     epilog="eschaton",
 )
@@ -425,7 +425,7 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
-    "-r", "--recursive", help="add ;aider to the end of the ai suggested command",
+    "-r", "--recursive", help="add ;mait to the end of the ai suggested command",
     action="store_true"
 )
 parser.add_argument(

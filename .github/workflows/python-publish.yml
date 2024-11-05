@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/shell-aider  # PyPI project page
+      url: https://pypi.org/p/muxmait  # PyPI project page
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
 

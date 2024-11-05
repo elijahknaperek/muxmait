@@ -1,4 +1,4 @@
-# Shell aider
+# muxmait
 
 A command-line tool that works with your tmux scrollback. It reads your tmux pane content and provides contextually aware command suggestions using various AI models through litellm.
 
@@ -9,19 +9,13 @@ A command-line tool that works with your tmux scrollback. It reads your tmux pan
 - Optional Stack Exchange integration to provide additional context from relevant stack exchange google search.
 - Terrible and poorly thought out features like auto-execution and recursive mode for automated system destruction.
 
-## Prerequisites
-
-- Python 3
-- TMux
-- litellm
-- BeautifulSoup4 (for Stack Exchange integration)
-- requests
-
 ## Installation
+
+0. Make sure you have tmux.
 
 1. Install required Python packages:
    ```bash
-   pip install shell-aider
+   pip install muxmait
    ```
 2. Set up your API key for your chosen provider as an environment variable:
    The tool looks for API keys in environment variables based on the chosen model:
@@ -31,6 +25,7 @@ A command-line tool that works with your tmux scrollback. It reads your tmux pan
    export ANTHROPIC_API_KEY="your-key-here"
    export GEMINI_API_KEY="your-key-here"
    export TOGETHER_API_KEY="your-key-here"
+   export XAI_API_KEY="your-key-here"
    ```
    - And any others supported by litellm
 
@@ -38,13 +33,13 @@ A command-line tool that works with your tmux scrollback. It reads your tmux pan
 
 Basic usage:
 ```bash
-aider [options] [input]
+mait [options] [input]
 ```
 
 ### Options
 
 - `-A`, `--auto`: Automatically execute the suggested command (use with caution)
-- `-r`, `--recursive`: Add `;aider` to the end of suggested commands for continuous operation
+- `-r`, `--recursive`: Add `;mait` to the end of suggested commands for continuous operation
 - `-m MODEL`, `--model MODEL`: Choose AI model (Can select by shorthand for some models eg.'cs' for claude-3-5-sonnet-latest or 'gf' for gemini/gemini-1.5-flash-latest  )
 - `-q`, `--quiet`: Only output the command without explanation
 - `-v`, `--verbose`: Enable verbose mode with detailed output
@@ -63,34 +58,34 @@ aider [options] [input]
 
 1. Basic command suggestion based on visible terminal content:
    ```bash
-   aider
+   mait
    ```
 
 2. Get a suggestion for a specific task:
    ```bash
-   aider how to find large files
+   mait how to find large files
    ```
 
-3. Use a specific model by number or name:
+3. Use a specific model by name or shorthand:
    ```bash
-   aider -m cs how do I automate these commands
+   mait -m cs how do I automate these commands
    # or
-   aider -m anthropic/claude-3-5-sonnet-latest how do I automate these commands
+   mait -m anthropic/claude-3-5-sonnet-latest how do I automate these commands
    ```
 
 4. Include Stack Exchange context with custom model:
    ```bash
-   aider -c -M gemini/gemini-1.5-pro-latest how to compress images in bulk
+   mait -c -M gemini/gemini-1.5-pro-latest how to compress images in bulk
    ```
 
 5. Auto-execute commands with auto and recursive mode(or don't):
    ```bash
-   aider -A -r process these files  # DO NOT DO THIS
+   mait -A -r process these files  # DO NOT DO THIS
    ```
 
 6. Include more context from terminal history:
    ```bash
-   aider -S 100 why won't this compile
+   mait -S 100 why wont this compile
    ```
 
 ## Security Considerations
