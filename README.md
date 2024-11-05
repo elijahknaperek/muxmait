@@ -1,6 +1,6 @@
-# Shell AI Assistant
+# Shell aider
 
-A command-line tool that integrates AI assistance directly into your terminal. It reads your tmux pane content and provides contextually aware command suggestions using various AI models through litellm.
+A command-line tool that works with your tmux scrollback. It reads your tmux pane content and provides contextually aware command suggestions using various AI models through litellm.
 
 ## Features
 
@@ -21,7 +21,7 @@ A command-line tool that integrates AI assistance directly into your terminal. I
 
 1. Install required Python packages:
    ```bash
-   pip install shellai-tmux
+   pip install shell-aider
    ```
 2. Set up your API key for your chosen provider as an environment variable:
    The tool looks for API keys in environment variables based on the chosen model:
@@ -38,13 +38,13 @@ A command-line tool that integrates AI assistance directly into your terminal. I
 
 Basic usage:
 ```bash
-shellai [options] [input]
+aider [options] [input]
 ```
 
 ### Options
 
 - `-A`, `--auto`: Automatically execute the suggested command (use with caution)
-- `-r`, `--recursive`: Add `;shellai` to the end of suggested commands for continuous operation
+- `-r`, `--recursive`: Add `;aider` to the end of suggested commands for continuous operation
 - `-m MODEL`, `--model MODEL`: Choose AI model (Can select by shorthand for some models eg.'cs' for claude-3-5-sonnet-latest or 'gf' for gemini/gemini-1.5-flash-latest  )
 - `-q`, `--quiet`: Only output the command without explanation
 - `-v`, `--verbose`: Enable verbose mode with detailed output
@@ -63,34 +63,34 @@ shellai [options] [input]
 
 1. Basic command suggestion based on visible terminal content:
    ```bash
-   shellai
+   aider
    ```
 
 2. Get a suggestion for a specific task:
    ```bash
-   shellai how to find large files
+   aider how to find large files
    ```
 
 3. Use a specific model by number or name:
    ```bash
-   shellai -m cs how do I automate these commands
+   aider -m cs how do I automate these commands
    # or
-   shellai -m anthropic/claude-3-5-sonnet-latest how do I automate these commands
+   aider -m anthropic/claude-3-5-sonnet-latest how do I automate these commands
    ```
 
 4. Include Stack Exchange context with custom model:
    ```bash
-   shellai -c -M gemini/gemini-1.5-pro-latest how to compress images in bulk
+   aider -c -M gemini/gemini-1.5-pro-latest how to compress images in bulk
    ```
 
 5. Auto-execute commands with auto and recursive mode(or don't):
    ```bash
-   shellai -A -r process these files  # DO NOT DO THIS
+   aider -A -r process these files  # DO NOT DO THIS
    ```
 
 6. Include more context from terminal history:
    ```bash
-   shellai -S 100 why won't this compile
+   aider -S 100 why won't this compile
    ```
 
 ## Security Considerations
