@@ -16,13 +16,13 @@ litellm.drop_params = True
 
 VERBOSE_LEN = 20
 YOUR_SITE_URL = ""
-YOUR_APP_NAME = "shellai"
+YOUR_APP_NAME = "aider"
 
 args: argparse.Namespace
 prefix_input: str
 
 default_system_prompt = """
-You are an AI assistant within a shell command 'shellai'. You operate by reading the
+You are an AI assistant within a shell command 'aider'. You operate by reading the
 users scrollback. You can not see interactive input. Here are your guidelines:
 
 DO ensure you present one command per response at the end, in a code block:
@@ -176,10 +176,10 @@ def put_command(command: str):
     # allows user to repeatedly call ai with the same options
     if args.recursive:
         if args.target == default_tmux_target:
-            command = command + ";shellai " + " ".join(sys.argv[1:])
+            command = command + ";aider " + " ".join(sys.argv[1:])
         else:
             subprocess.run(
-                    f'tmux send-keys "shellai {" ".join(sys.argv[1:])}" {enter}',
+                    f'tmux send-keys "aider {" ".join(sys.argv[1:])}" {enter}',
                     shell=True
                     )
             print("\n")
@@ -350,7 +350,7 @@ def main():
                 shell=True
                 )
         input_string += ib.decode("utf-8")
-        # remove shellai invocation from prompt (hopefully)
+        # remove aider invocation from prompt (hopefully)
         if args.target == default_tmux_target:
             input_string = "\n".join(input_string.strip().splitlines()[0:-1])
         input_string += "\n"
@@ -404,6 +404,7 @@ model_dict = {
         "ch": "claude-3-haiku-20240307",
         "o4m": "openai/gpt-4o-mini",
         "o4o": "openai/gpt-4o",
+        "xg": "xai/grok-beta",
         }
 
 default_tmux_target = (
@@ -414,7 +415,7 @@ default_tmux_target = (
         )
 
 parser = argparse.ArgumentParser(
-    prog="shellai",
+    prog="aider",
     description="ai terminal assistant",
     epilog="eschaton",
 )
@@ -424,7 +425,7 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
-    "-r", "--recursive", help="add ;shellai to the end of the ai suggested command",
+    "-r", "--recursive", help="add ;aider to the end of the ai suggested command",
     action="store_true"
 )
 parser.add_argument(
