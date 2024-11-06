@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
-import litellm
-from litellm.types.utils import ModelResponse
-from typing import cast
-import requests
-import sys
-import os
-import subprocess
-import re
-import argparse
-from time import sleep
-from bs4 import BeautifulSoup
+try:
+    import litellm
+    from litellm.types.utils import ModelResponse
+    from typing import cast
+    import sys
+    import os
+    import subprocess
+    import re
+    import argparse
+    from time import sleep
+except KeyboardInterrupt:
+    print(" KeyboardInterrupt")
+    quit()
 
 litellm.drop_params = True
 
@@ -206,6 +208,8 @@ headers = {
 
 
 def extract_qa(html_content: str) -> str:
+
+    from bs4 import BeautifulSoup
     # Parse the HTML content
     soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -230,6 +234,9 @@ def extract_qa(html_content: str) -> str:
 
 
 def google_search(query: str) -> list[str]:
+
+    from bs4 import BeautifulSoup
+    import requests
     # Constructing the URL for Google search
     url = f"https://www.google.com/search?q={query}&num=10"
 
@@ -259,6 +266,8 @@ def google_search(query: str) -> list[str]:
 
 
 def get_stack_answers(question: str) -> str:
+
+    import requests
     res = google_search(question)
     p = ""
     for r in res:
@@ -396,6 +405,7 @@ def run_muxmait():
 
 
 def main():
+    global args
     try:
         run_muxmait()
     except KeyboardInterrupt:
