@@ -11,7 +11,6 @@ import argparse
 from time import sleep
 from bs4 import BeautifulSoup
 
-
 litellm.drop_params = True
 
 VERBOSE_LEN = 20
@@ -306,7 +305,7 @@ Possibly Relevant Stack Overflow information, Only consider if relevant to users
 """
 
 
-def main():
+def run_muxmait():
 
     global args, prefix_input
 
@@ -394,6 +393,13 @@ def main():
         process_prompt(prompt, input_system_prompt, args.model)
     else:
         print("No input. Are you inside tmux?")
+
+
+def main():
+    try:
+        run_muxmait()
+    except KeyboardInterrupt:
+        print(" KeyboardInterrupt")
 
 
 model_dict = {
