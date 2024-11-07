@@ -20,7 +20,6 @@ YOUR_SITE_URL = ""
 YOUR_APP_NAME = "muxmait"
 
 args: argparse.Namespace
-prefix_input: str
 
 default_system_prompt = """
 You are an AI assistant within a shell command 'mait'. You operate by reading the
@@ -50,8 +49,6 @@ DO use commands like `sed` or `echo >>` for file edits, or other non-interactive
 DO NOT add anything after command
 
 If no command seems necessary, gather info or give a command for the user to explore.
-
-ONLY ONE COMMAND PER RESPONSE AT END OF RESPONSE
 """
 
 make_google_search_sys_prompt = """
@@ -85,7 +82,7 @@ def get_response_debug(prompt: str, system_prompt: str, model: str) -> str:
     response += "prefix_input:".ljust(VERBOSE_LEN) +\
                 prompt.splitlines()[0:-1][0] + "\n"
     response += "test code block:\n"
-    response += "```bash\n echo \"$(" + prefix_input + ")\"\n```\n"
+    response += "```bash\n echo \"$(" + prompt.splitlines()[0:-1][0] + ")\"\n```\n"
     return response
 
 
@@ -316,7 +313,7 @@ Possibly Relevant Stack Overflow information, Only consider if relevant to users
 
 def run_muxmait():
 
-    global args, prefix_input
+    global args
 
     args, arg_input = parser.parse_known_args()
 
