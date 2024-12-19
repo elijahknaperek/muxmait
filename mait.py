@@ -411,7 +411,8 @@ def main():
 
 model_dict = {
         "nh": "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
-        "gf": "gemini/gemini-1.5-flash-latest",
+        "gf": "gemini/gemini-2.0-flash-exp",
+        "gt": "gemini-2.0-flash-thinking-exp",
         "gp": "gemini/gemini-1.5-pro-latest",
         "cs": "anthropic/claude-3-5-sonnet-latest",
         "ch": "claude-3-haiku-20240307",
@@ -442,8 +443,8 @@ parser.add_argument(
     action="store_true"
 )
 parser.add_argument(
-    "-m", "--model", help=f"Set model. Default is {model_dict["nh"]}. You can also pass a number to select from model list",
-    default=model_dict["nh"]
+    "-m", "--model", help=f"Set model. Default is {model_dict["gf"]}. You can also pass a number to select from model list",
+    default=model_dict["gf"]
 )
 parser.add_argument(
     "-q", "--quiet", help="only return command no explanation",
