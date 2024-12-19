@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 try:
-    import litellm
-    from litellm.types.utils import ModelResponse
+    from openai import OpenAI
     from typing import cast
     import sys
     import os
@@ -13,7 +12,6 @@ except KeyboardInterrupt:
     print(" KeyboardInterrupt")
     quit()
 
-litellm.drop_params = True
 
 VERBOSE_LEN = 20
 YOUR_SITE_URL = ""
@@ -87,6 +85,9 @@ def get_response_debug(prompt: str, system_prompt: str, model: str) -> str:
 
 
 def get_response_litellm(prompt: str, system_prompt: str, model: str) -> str:
+    import litellm
+    from litellm.types.utils import ModelResponse
+    litellm.drop_params = True
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": prompt}
@@ -94,7 +95,7 @@ def get_response_litellm(prompt: str, system_prompt: str, model: str) -> str:
     response = cast(ModelResponse, litellm.completion(
         model=model,
         messages=messages,
-        temperature=0,
+        temperature=1,
         stop=["```\n"],
         frequency_penalty=1.3,
     ))
@@ -107,12 +108,38 @@ def get_response_litellm(prompt: str, system_prompt: str, model: str) -> str:
         quit()
 
 
+def get_response_openai(prompt: str, system_prompt: str, model: str) -> str:
+    client = OpenAI(
+        api_key=os.getenv(direct_models[model]["api_key"]),
+        base_url=direct_models[model]["base_url"],
+    )
+    completion = client.chat.completions.create(
+        model=model[model.find("/")+1:],
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=1.0,
+        stop=["```\n"],
+    )
+    try:
+        return str(completion.choices[0].message.content)
+    except (AttributeError, KeyError):
+        print("unexpected output")
+        print(completion)
+        quit()
+
+
 def get_response(prompt: str, system_prompt: str, model: str) -> str:
     if args.verbose:
         print("getting response")
+        print(f"using model {model}")
+        print("use litellm " + str(model not in direct_models))
     response: str
     if args.debug:
         response = get_response_debug(prompt, system_prompt, model)
+    elif model in direct_models:
+        response = get_response_openai(prompt, system_prompt, model)
     else:
         response = get_response_litellm(prompt, system_prompt, model)
     if args.verbose:
@@ -412,7 +439,7 @@ def main():
 model_dict = {
         "nh": "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
         "gf": "gemini/gemini-2.0-flash-exp",
-        "gt": "gemini-2.0-flash-thinking-exp",
+        "gt": "gemini/gemini-2.0-flash-thinking-exp",
         "gp": "gemini/gemini-1.5-pro-latest",
         "cs": "anthropic/claude-3-5-sonnet-latest",
         "ch": "claude-3-haiku-20240307",
@@ -420,6 +447,51 @@ model_dict = {
         "o4o": "openai/gpt-4o",
         "xg": "xai/grok-beta",
         }
+
+# Base URLs for different providers
+base_urls = {
+    "gemini": "https://generativelanguage.googleapis.com/v1beta/openai/",
+    "xai": "https://api.x.ai/v1",
+    "openai": "https://api.openai.com/v1/chat/completions",
+    "openrouter": "https://openrouter.ai/api/v1"
+}
+
+# Model configurations with their respective API keys and base URLs
+direct_models = {
+    "gemini/gemini-2.0-flash-exp": {
+        "api_key": "GEMINI_API_KEY",
+        "base_url": base_urls["gemini"]
+    },
+    "gemini/gemini-2.0-flash-thinking-exp": {
+        "api_key": "GEMINI_API_KEY",
+        "base_url": base_urls["gemini"]
+    },
+    "gemini/gemini-1.5-pro-latest": {
+        "api_key": "GEMINI_API_KEY",
+        "base_url": base_urls["gemini"]
+    },
+    "gemini/gemini-1.5-flash-latest": {
+        "api_key": "GEMINI_API_KEY",
+        "base_url": base_urls["gemini"]
+    },
+    "openai/gpt-4o-mini": {
+        "api_key": "OPENAI_API_KEY",
+        "base_url": base_urls["openai"]
+    },
+    "openai/gpt-4o": {
+        "api_key": "OPENAI_API_KEY",
+        "base_url": base_urls["openai"]
+    },
+    "xai/grok-beta": {
+        "api_key": "XAI_API_KEY",
+        "base_url": base_urls["xai"]
+    },
+    "openrouter/nousresearch/hermes-3-llama-3.1-405b:free": {
+        "api_key": "OPENROUTER_API_KEY",
+        "base_url": base_urls["openrouter"]
+    }
+}
+
 
 default_tmux_target = (
             subprocess
