@@ -97,7 +97,7 @@ def get_response_litellm(prompt: str, system_prompt: str, model: str) -> str:
         messages=messages,
         temperature=1,
         stop=["```\n"],
-        frequency_penalty=1.3,
+        thinking={"type": "disabled",}
     ))
 
     try:
@@ -438,9 +438,9 @@ def main():
 
 model_dict = {
         "nh": "openrouter/nousresearch/hermes-3-llama-3.1-405b:free",
-        "gf": "gemini/gemini-2.0-flash-exp",
-        "gt": "gemini/gemini-2.0-flash-thinking-exp",
-        "gp": "gemini/gemini-1.5-pro-latest",
+        "gf": "gemini/gemini-2.5-flash",
+        "gt": "gemini/gemini-2.5-flash-lite-preview-06-17",
+        "gp": "gemini/gemini-2.5-pro-preview-05-06",
         "cs": "anthropic/claude-3-5-sonnet-latest",
         "ch": "claude-3-haiku-20240307",
         "o4m": "openai/gpt-4o-mini",
